@@ -1,0 +1,110 @@
+diff --git a/doc/Makefile.am b/doc/Makefile.am
+index dff59e9c..8f7b77e8 100644
+--- a/doc/Makefile.am
++++ b/doc/Makefile.am
+@@ -73,10 +73,14 @@ extra_files =                                                                  \
+ 
+ # ------------------------------------------------------------------------------
+ 
+-all-local: $(DOC_MAIN_SGML_FILE)
++all-local: generate-main-sgml-file
++
++# New gtk-doc 2.16 for some reason automatically creates a no-op
++# "$(DOC_MAIN_SGML_FILE)" make target that overrides our target
++$(DOC_MAIN_SGML_FILE): generate-main-sgml-file
+ 
+ # udisks2-docs.xml, udisks2-sections.txt udisks2.types
+-$(DOC_MAIN_SGML_FILE): $(DOC_MAIN_SGML_FILE).in $(UDISKS_SECTIONS).in $(UDISKS_TYPES).in
++generate-main-sgml-file: $(DOC_MAIN_SGML_FILE).in $(UDISKS_SECTIONS).in $(UDISKS_TYPES).in
+ 	$(AM_V_at) rm -f $(DOC_MAIN_SGML_FILE) $(UDISKS_SECTIONS) $(UDISKS_TYPES) && \
+ 	cp $(DOC_MAIN_SGML_FILE).in $(builddir)/$(DOC_MAIN_SGML_FILE) && \
+ 	cp $(UDISKS_SECTIONS).in $(builddir)/$(UDISKS_SECTIONS) && \
+@@ -261,3 +265,5 @@ CLEANFILES +=                                                                  \
+ 	*.stamp                                                                \
+ 	-rf xml html tmpl                                                      \
+ 	$(NULL)
++
++.PHONY: generate-main-sgml-file
+diff --git a/src/udisksdaemon.c b/src/udisksdaemon.c
+index 9ca899e0..27b6ba17 100644
+--- a/src/udisksdaemon.c
++++ b/src/udisksdaemon.c
+@@ -264,12 +264,17 @@ udisks_daemon_constructed (GObject *object)
+         }
+     }
+ 
+-  if (!g_file_test (PACKAGE_LOCALSTATE_DIR "/lib/udisks2", G_FILE_TEST_IS_DIR))
++  /* If we're running in a snap environment just keep the state in $SNAP_DATA.
++   * otherwise we need to create a traditional state dir */
++  if (g_getenv ("SNAP_DATA") == NULL)
+     {
+-      if (g_mkdir_with_parents (PACKAGE_LOCALSTATE_DIR "/lib/udisks2", 0700) != 0)
+-        {
+-          udisks_critical ("Error creating directory %s: %m", PACKAGE_LOCALSTATE_DIR "/lib/udisks2");
+-        }
++      if (!g_file_test (PACKAGE_LOCALSTATE_DIR "/lib/udisks2", G_FILE_TEST_IS_DIR))
++      {
++        if (g_mkdir_with_parents (PACKAGE_LOCALSTATE_DIR "/lib/udisks2", 0700) != 0)
++          {
++            udisks_error ("Error creating directory %s: %m", PACKAGE_LOCALSTATE_DIR "/lib/udisks2");
++          }
++      }
+     }
+ 
+ 
+diff --git a/src/udisksstate.c b/src/udisksstate.c
+index 4d6e95a9..8c23286c 100644
+--- a/src/udisksstate.c
++++ b/src/udisksstate.c
+@@ -2236,14 +2236,20 @@ udisks_state_get (UDisksState           *state,
+    * - could also mmap the file
+    */
+ 
+-#ifdef HAVE_FHS_MEDIA
+-  /* /media usually isn't on a tmpfs, so we need to make this persistant */
+-  if (strcmp (key, "mounted-fs") == 0)
+-    path = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/udisks2/%s", key);
++  if (g_getenv ("SNAP_DATA") != NULL)
++  {
++    path = g_strdup_printf ("%s/%s", g_getenv ("SNAP_DATA"), key);
++  }
+   else
++  {
++#ifdef HAVE_FHS_MEDIA
++    /* /media usually isn't on a tmpfs, so we need to make this persistant */
++    if (strcmp (key, "mounted-fs") == 0)
++      path = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/udisks2/%s", key);
++    else
+ #endif
+-    path = g_strdup_printf ("/run/udisks2/%s", key);
+-
++      path = g_strdup_printf ("/run/udisks2/%s", key);
++  }
+ 
+   /* see if it's already in the cache */
+   ret = g_hash_table_lookup (state->cache, path);
+@@ -2309,13 +2315,20 @@ udisks_state_set (UDisksState          *state,
+   data = g_malloc (size);
+   g_variant_store (normalized, data);
+ 
++  if (g_getenv ("SNAP_DATA") != NULL)
++  {
++    path = g_strdup_printf ("%s/%s", g_getenv ("SNAP_DATA"), key);
++  }
++  else
++  {
+ #ifdef HAVE_FHS_MEDIA
+   /* /media usually isn't on a tmpfs, so we need to make this persistant */
+-  if (strcmp (key, "mounted-fs") == 0)
+-    path = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/udisks2/%s", key);
+-  else
++    if (strcmp (key, "mounted-fs") == 0)
++      path = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/udisks2/%s", key);
++    else
+ #endif
+-    path = g_strdup_printf ("/run/udisks2/%s", key);
++      path = g_strdup_printf ("/run/udisks2/%s", key);
++  }
+ 
+   g_hash_table_insert (state->cache, g_strdup (path), g_variant_ref (value));
+ 

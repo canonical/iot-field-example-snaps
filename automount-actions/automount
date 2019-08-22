@@ -1,0 +1,12 @@
+#! /bin/sh
+
+sleep 5
+
+udisksctl monitor | grep --line-buffered " Device:" | while read -r -- device; do
+  if echo $device| grep -q "[0-9]$"; then
+    DEV="$(echo $device | sed 's/^Device: //')"
+  fi
+  if [ -n "$DEV" ]; then
+    udisksctl mount --no-user-interaction --block-device "$DEV"
+  fi
+done

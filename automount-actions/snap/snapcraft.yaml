@@ -1,0 +1,109 @@
+name: automount
+base: core18
+version: '0.1'
+summary: Automatically mount plugged in USB devices on Ubuntu Core
+description: |
+  This snap adds a daemon that waits for USB plug events of block devices
+  and automatically mounts such devices under the /media dir when plugged
+  in.
+
+  The snap also ships an automount.unmount command that you can execute to
+  unmount automatically mounted devices.
+
+grade: stable
+confinement: strict
+
+apps:
+  udisksd:
+    command: libexec/udisks2/udisksd
+    daemon: simple
+    slots: [ service ]
+    plugs:
+      - hardware-observe
+      - mount-observe
+  automount:
+    command: bin/automount
+    daemon: simple
+    after: [ udisksd ]
+    plugs:
+      - client
+  udiskctl:
+    command: bin/udiskctl.sh
+    plugs:
+      - client
+
+slots:
+  service:
+    interface: udisks2
+plugs:
+  client:
+    interface: udisks2
+
+layout:
+  /var/lib/udisks2:
+    bind: $SNAP_DATA/var/lib/udisks2
+  /etc/udisks2/udisks2.conf:
+    bind-file: $SNAP/etc/udisks2/udisks2.conf
+  /etc/libblockdev/conf.d:
+    bind: $SNAP/etc/libblockdev/conf.d
+
+parts:
+  automount:
+    source: .
+    plugin: nil
+    override-build: |
+      mkdir $SNAPCRAFT_PART_INSTALL/bin
+      cp -av automount $SNAPCRAFT_PART_INSTALL/bin/
+      cp -av udiskctl.sh $SNAPCRAFT_PART_INSTALL/bin/
+  udisks:
+    source: https://github.com/storaged-project/udisks.git
+    source-tag: udisks-2.6.4
+    plugin: autotools
+    override-pull: |
+      snapcraftctl pull
+      git apply -v ../../../udisksd.patch
+    configflags:
+        - --enable-fhs-media
+    install-via: destdir
+    build-packages:
+        - pkg-config
+        - xsltproc
+        - gtk-doc-tools
+        - intltool
+        - libglib2.0-dev
+        - udev
+        - libgudev-1.0-dev
+        - libpolkit-gobject-1-dev
+        - libpolkit-agent-1-dev
+        - libacl1-dev
+        - libgirepository1.0-dev
+        - gobject-introspection
+        - libatasmart-dev
+        - libsystemd-dev
+        - libmount-dev
+    stage-packages:
+        - libacl1
+        - libatasmart4
+        - libglib2.0-0
+        - libgudev-1.0-0
+        - libpam-systemd
+        - libpolkit-agent-1-0
+        - libpolkit-gobject-1-0
+        - parted
+        - libmount1
+    filesets:
+      licenses:
+          - usr/share/doc/*/*copyright*
+      binaries:
+          - bin/udisksctl
+          - libexec/udisks2/udisksd
+    prime:
+        - $binaries
+        - $licenses
+        - lib
+        - -lib/pkgconfig
+        - -lib/systemd
+        - -lib/cgmanager
+        - libexec
+        - sbin
+        - usr/lib/*/*.so*
