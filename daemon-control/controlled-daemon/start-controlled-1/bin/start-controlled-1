@@ -1,0 +1,3 @@
+#/bin/sh -e
+echo "start-controlled-1 app running"
+snapctl start test-controlled-daemons.controlled-1

@@ -9,11 +9,16 @@ grade: devel
 confinement: strict
 
 apps:
-  controlled:
+  controlled-1:
     command: bin/controlled-1
     daemon: simple
+  start-controlled-1:
+    command: bin/start-controlled-1
 
 parts:
   controlled-1:
     source: controlled-1
+    plugin: dump
+  start-controlled-1:
+    source: start-controlled-1
     plugin: dump
