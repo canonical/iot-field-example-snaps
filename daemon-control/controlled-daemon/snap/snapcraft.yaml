@@ -1,0 +1,19 @@
+name: test-controlled-daemons
+base: core18
+version: '0.1'
+summary: test a controlled daemon
+description: a controlled daemon
+  
+
+grade: devel
+confinement: strict
+
+apps:
+  controlled:
+    command: bin/controlled-1
+    daemon: simple
+
+parts:
+  controlled-1:
+    source: controlled-1
+    plugin: dump
