@@ -1,0 +1,2 @@
+#/bin/sh -e
+snapctl stop ${SNAP_NAME}.controlled-1
