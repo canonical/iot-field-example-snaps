@@ -1,8 +1,8 @@
-name: test-controlled-daemons
+name: test-controller-daemons
 base: core18
 version: '0.1'
-summary: test a controlled daemon
-description: a controlled daemon
+summary: test adaemon  controller
+description: a daemon controller
   
 
 grade: devel
@@ -14,8 +14,12 @@ apps:
     daemon: simple
   start-controlled-1:
     command: bin/start-controlled-1
-  #list:
-    #command: 
+  list:
+    command: bin/list
+    plugs: [ snapd-control ]
+  start:
+    command: bin/start
+    plugs: [ snapd-control ]
 
 parts:
   controlled-1:
@@ -24,12 +28,34 @@ parts:
   start-controlled-1:
     source: start-controlled-1
     plugin: dump
+    #go:
+    #plugin: nil
+    #source-tag: go1.12.1
+    #source-depth: 1
   snapdapi:
-    source: snapdapi
+    source: .
     plugin: go
-    go-importpath: github.com/snapcore/snapd/
-    source-type: git 
-    #  list:
+    go-importpath: github.com/knitzsche/test-controller-daemons
+    #go-importpath: github.com/snapcore/snapd
+    #go-packages: [github.com/snapcore/snapd/client]
+    #source-type: git 
+    #after: [ go ]
+    override-build: |
+       echo "working dir 1 is $(pwd)"
+       mkdir -p  ../go/
+       #snapcraftctl build
+       export GOPATH=$(cd ../go && pwd)
+       GOBIN=$GOPATH/bin
+       echo "GOBIN 1 is $GOBIN"
+       PKG=github.com/knitzsche/test-controller-daemons
+       mkdir -p $GOBIN
+       cd $GOPATH/src/$PKG
+       echo "working dir 2 is $(pwd)"
+       go install ./...
+       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+       cp $GOBIN/list $SNAPCRAFT_PART_INSTALL/bin/
+       cp $GOBIN/start $SNAPCRAFT_PART_INSTALL/bin/
+  #list:
     #source: cmd/list/
     #plugin: go
     #go-importpath: github.com/knitzsche/test-controller-daemons

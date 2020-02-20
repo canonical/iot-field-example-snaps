@@ -1,0 +1,3 @@
+#!/bin/sh -e
+echo "controlled-1 install hook run."
+snapctl stop test-controller-daemons.controlled-1 --disable
