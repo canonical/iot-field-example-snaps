@@ -16,7 +16,7 @@ apps:
     command: bin/start-controlled-1
   stop-controlled-1:
     command: bin/stop-controlled-1
-  start:
+  controller:
     command: bin/start
     daemon: simple
     plugs: [ snapd-control ]
