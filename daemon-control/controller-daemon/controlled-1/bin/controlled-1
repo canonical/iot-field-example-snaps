@@ -1,6 +1,6 @@
 #/bin/bash
 
 while true; do
-	echo "controlled-1 is running"
+	echo "CONTROLLER snap, ${SNAP_NAME}.controlled-1 is running"
 	sleep 5
 done
