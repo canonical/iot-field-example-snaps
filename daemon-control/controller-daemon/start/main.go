@@ -12,7 +12,7 @@ func main() {
 	snapDaemon := "test-controlled-daemons.controlled-1"
 	for { // loop forever
 		time.Sleep(20 * time.Second)
-		fmt.Println("About to stop %s", snapDaemon) 
+		fmt.Printf("About to start %s\n", snapDaemon) 
 		snap := snapdapi.NewClientAdapter()
 		startOpts := client.StartOptions{}
 		startOpts.Enable = false

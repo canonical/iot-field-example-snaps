@@ -14,14 +14,12 @@ apps:
     daemon: simple
   start-controlled-1:
     command: bin/start-controlled-1
-  stopit:
-    command: bin/start
-    daemon: simple
-  list:
-    command: bin/list
-    plugs: [ snapd-control ]
   start:
     command: bin/start
+    daemon: simple
+    plugs: [ snapd-control ]
+  list:
+    command: bin/list
     plugs: [ snapd-control ]
 
 parts:
