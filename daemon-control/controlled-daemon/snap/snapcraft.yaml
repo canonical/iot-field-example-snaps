@@ -14,6 +14,8 @@ apps:
     daemon: simple
   start-controlled-1:
     command: bin/start-controlled-1
+  stop-controlled-1:
+    command: bin/stop-controlled-1
 
 parts:
   controlled-1:
@@ -21,4 +23,7 @@ parts:
     plugin: dump
   start-controlled-1:
     source: start-controlled-1
+    plugin: dump
+  stop-controlled-1:
+    source: stop-controlled-1
     plugin: dump
