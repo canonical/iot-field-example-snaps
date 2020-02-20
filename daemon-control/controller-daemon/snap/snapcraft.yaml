@@ -17,7 +17,7 @@ apps:
   stop-controlled-1:
     command: bin/stop-controlled-1
   controller:
-    command: bin/start
+    command: bin/controller
     daemon: simple
     plugs: [ snapd-control ]
   list:
@@ -38,14 +38,4 @@ parts:
     source: .
     plugin: go
     go-importpath: github.com/knitzsche/test-controller-daemons
-    override-build: |
-       mkdir -p  ../go/
-       export GOPATH=$(cd ../go && pwd)
-       GOBIN=$GOPATH/bin
-       PKG=github.com/knitzsche/test-controller-daemons
-       mkdir -p $GOBIN
-       cd $GOPATH/src/$PKG
-       go install ./...
-       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
-       cp $GOBIN/list $SNAPCRAFT_PART_INSTALL/bin/
-       cp $GOBIN/start $SNAPCRAFT_PART_INSTALL/bin/
+    build-packages: [ gcc ]
