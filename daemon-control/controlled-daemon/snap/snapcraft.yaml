@@ -1,6 +1,6 @@
 name: test-controlled-daemons
 base: core18
-version: '0.1'
+version: '1'
 summary: test a controlled daemon
 description: a controlled daemon
   
