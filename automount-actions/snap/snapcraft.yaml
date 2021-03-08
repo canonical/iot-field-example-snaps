@@ -1,6 +1,6 @@
 name: automount
-base: core18
-version: '0.1'
+base: core20
+version: '0.2'
 summary: Automatically mount plugged in USB devices on Ubuntu Core
 description: |
   This snap adds a daemon that waits for USB plug events of block devices
@@ -13,9 +13,12 @@ description: |
 grade: stable
 confinement: strict
 
+environment:
+  LD_LIBRARY_PATH: $SNAP/usr/local/lib
+ 
 apps:
   udisksd:
-    command: libexec/udisks2/udisksd
+    command: usr/local/libexec/udisks2/udisksd
     daemon: simple
     slots: [ service ]
     plugs:
@@ -46,6 +49,10 @@ layout:
     bind-file: $SNAP/etc/udisks2/udisks2.conf
   /etc/libblockdev/conf.d:
     bind: $SNAP/etc/libblockdev/conf.d
+  /usr/local/etc/udisks2:
+    bind: $SNAP/usr/local/etc/udisks2
+  /etc/crypttab:
+    bind-file: $SNAP/etc/crypttab
 
 parts:
   automount:
@@ -62,9 +69,8 @@ parts:
     override-pull: |
       snapcraftctl pull
       git apply -v ../../../udisksd.patch
-    configflags:
-        - --enable-fhs-media
-    install-via: destdir
+    autotools-configure-parameters: ["--enable-fhs-media"]
+    #install-via: destdir
     build-packages:
         - pkg-config
         - xsltproc
@@ -81,6 +87,7 @@ parts:
         - libatasmart-dev
         - libsystemd-dev
         - libmount-dev
+        - gnome-common
     stage-packages:
         - libacl1
         - libatasmart4
@@ -95,8 +102,9 @@ parts:
       licenses:
           - usr/share/doc/*/*copyright*
       binaries:
-          - bin/udisksctl
-          - libexec/udisks2/udisksd
+          - usr/local/bin/udisksctl
+          - usr/local/libexec/udisks2/udisksd
+          - usr/local/lib
     prime:
         - $binaries
         - $licenses
@@ -104,6 +112,5 @@ parts:
         - -lib/pkgconfig
         - -lib/systemd
         - -lib/cgmanager
-        - libexec
         - sbin
         - usr/lib/*/*.so*
