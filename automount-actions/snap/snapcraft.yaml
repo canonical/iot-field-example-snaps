@@ -1,4 +1,4 @@
-name: automount
+name: automount-actions
 base: core20
 version: '0.2'
 summary: Automatically mount plugged in USB devices on Ubuntu Core
@@ -15,6 +15,8 @@ confinement: strict
 
 environment:
   LD_LIBRARY_PATH: $SNAP/usr/local/lib
+  # Signal file to inform USB drive mounted
+  WATCHED: $SNAP_DATA/watched
  
 apps:
   udisksd:
@@ -34,6 +36,13 @@ apps:
     command: bin/udiskctl.sh
     plugs:
       - client
+  list:
+    command: bin/list
+    plugs: [ snapd-control ]
+  on-mount-do:
+    command: bin/on-mount-do
+    daemon: simple
+    plugs: [ snapd-control ]
 
 slots:
   service:
@@ -55,6 +64,12 @@ layout:
     bind-file: $SNAP/etc/crypttab
 
 parts:
+  actions:
+    source: actions
+    plugin: dump
+  debs:
+    plugin: nil
+    stage-packages: [ curl, inotify-tools ] 
   automount:
     source: .
     plugin: nil

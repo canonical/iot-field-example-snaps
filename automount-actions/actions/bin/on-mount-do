@@ -1,0 +1,10 @@
+#!/bin/bash
+
+while true;
+do
+  echo "About to inotifiywatch: $WATCHED"
+  $SNAP/usr/bin/inotifywait -e open $WATCHED
+  echo "Done with inotifiywatch, about to curl"
+  $SNAP/usr/bin/curl -o $SNAP_DATA/curl-out -sS --unix-socket /run/snapd.socket http://localhost/v2/apps 
+  echo "Done one with curl"
+done
