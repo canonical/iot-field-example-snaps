@@ -50,6 +50,9 @@ slots:
 plugs:
   client:
     interface: udisks2
+  net-bind:
+    interface: network-bind
+
 
 layout:
   /var/lib/udisks2:
