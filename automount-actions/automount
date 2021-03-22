@@ -8,5 +8,6 @@ udisksctl monitor | grep --line-buffered " Device:" | while read -r -- device; d
   fi
   if [ -n "$DEV" ]; then
     udisksctl mount --no-user-interaction --block-device "$DEV"
+    echo "$DEV" > $WATCHED
   fi
 done
