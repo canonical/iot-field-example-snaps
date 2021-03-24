@@ -1,13 +1,73 @@
 #!/bin/bash
 
-ASSERT=`cat ${SNAP_DATA}/assert`
-THESNAP=`cat ${SNAP_DATA}/thesnap`
+LOGFILE=$SNAP_COMMON/auto-install-usb.log
+
 while true;
 do
-  $SNAP/usr/bin/inotifywait -e open $WATCHED
-  # add the assert:
-  $SNAP/usr/bin/curl -X POST -sS --unix-socket /run/snapd.socket http://localhost/v2/assertions --data-binary "@${SNAP_DATA}/${ASSERT}"
-  # install the snap
-  $SNAP/usr/bin/curl -sS --unix-socket /run/snapd.socket --form snap=@${SNAP_DATA}/${THESNAP} http://localhost/v2/snaps
+  sleep 5
+  #WATCHED is touched on automount and it contents show the mount point
+  ${SNAP}/usr/bin/inotifywait -e open ${WATCHED}
+  echo "`date -Iseconds` ${WATCHED} file touched" >> $LOGFILE
 
+  #MNT is the mountpoint of the USB drive
+  MNT=`cat ${WATCHED}`
+
+  ASSERTS=`ls "${MNT}" | grep assert$`
+  # stop if no assert files found
+  [[ -z $ASSERTS ]] && break
+  for ANASSERT in ${ASSERTS}; do
+    echo "`date -Iseconds` ${ANASSERT} found." >> $LOGFILE
+  done
+
+  SNAPS=`ls "${MNT}" | grep snap$`
+  # stop if no snap files found
+  [[ -z $SNAPS ]] && break
+  for ASNAP in ${SNAPS}; do
+    echo "`date -Iseconds` ${ASNAP} found." >> $LOGFILE
+  done
+
+  #Make a datetime that also works on fat32 filenames
+  DT=`date -Iseconds | sed 's_\:_-_' | sed 's_\:_-_' | sed 's_\:_-_'`
+
+  for ASSERT in ${ASSERTS}; do
+    ASSERT_RES_FILE="${SNAP_COMMON}/${ASSERT}_result.${DT}"
+    # Add the assert:
+    ${SNAP}/usr/bin/curl -o "${ASSERT_RES_FILE}" -X POST -sS --unix-socket /run/snapd.socket http://localhost/v2/assertions --data-binary "@${MNT}/${ASSERT}"
+    cp ${ASSERT_RES_FILE} ${MNT}
+    grep -Iq '"status":"OK"' ${ASSERT_RES_FILE}
+    if [[ "$?" == "0" ]]; then
+      echo "`date -Iseconds` ${ASSERT} succeeded" >> $LOGFILE
+    else
+      echo "`date -Iseconds` ${ASSERT} led" >> $LOGFILE
+      echo "`date -Iseconds` Install from USB failed. STOPPED." >> $LOGFILE
+      break
+    fi
+  done
+
+  for ASNAP in ${SNAPS}; do
+    SNAP_RES_FILE="${SNAP_COMMON}/${ASNAP}_result.${DT}"
+    # install the snap
+    ${SNAP}/usr/bin/curl -o "${SNAP_RES_FILE}" -sS --unix-socket /run/snapd.socket --form snap=@${MNT}/${ASNAP} http://localhost/v2/snaps
+    cp ${SNAP_RES_FILE} ${MNT}
+    grep -Iq '"status":"Accepted"' ${SNAP_RES_FILE}
+    if [[ "$?" == "0" ]]; then
+      echo "`date -Iseconds` ${ASNAP} succeeded" >> $LOGFILE
+      # set snapd to explicitly follow stable for this snap
+      SNAPNAME=`echo ${ASNAP} | cut -f1 -d_`
+      # keep trying to set the channel to stable it may take some time if snap change is in process
+      # give up after 30 seconds, to pick a value. 
+      IDX=0
+      while [ $IDX -lt 30 ]; do
+        ${SNAP}/usr/bin/curl -X POST -o "${SNAP_RES_FILE}.channel" --header "Content-Type: application/json"  --data '{"action":"switch","channel":"stable"}' -sS --unix-socket /run/snapd.socket http://localhost/v2/snaps/${SNAPNAME}
+	sleep 1
+	grep -Iq '"status":"Accepted"' ${SNAP_RES_FILE}.channel
+	if [[ "$?" == "0" ]]; then break; fi
+	let IDX=$IDX+1
+      done
+    else
+      echo "`date -Iseconds` ${ASNAP} led" >> $LOGFILE
+      echo "`date -Iseconds` Install from USB failed. STOPPED." >> $LOGFILE
+      break
+    fi
+  done
 done

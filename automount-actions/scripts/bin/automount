@@ -2,12 +2,16 @@
 
 sleep 5
 
-udisksctl monitor | grep --line-buffered " Device:" | while read -r -- device; do
+$SNAP/usr/local/bin/udisksctl monitor | grep --line-buffered " Device:" | while read -r -- device; do
+
+  echo "$SNAP_NAME.automount found ${device}"
   if echo $device| grep -q "[0-9]$"; then
     DEV="$(echo $device | sed 's/^Device: //')"
   fi
   if [ -n "$DEV" ]; then
-    udisksctl mount --no-user-interaction --block-device "$DEV"
-    echo "$DEV" > $WATCHED
+    RES=`$SNAP/usr/local/bin/udisksctl mount --no-user-interaction --block-device "$DEV"`
+    # process returned value into the mount point string
+    RES2=`echo $RES | cut -f4 -d\  | cut -f1 -d.`
+    echo $RES2 > $WATCHED
   fi
 done

@@ -1,22 +1,18 @@
 name: automount-actions
 base: core20
 version: '0.2'
-summary: Automatically mount plugged in USB devices on Ubuntu Core
+summary: Automatically mount USB and take actions
 description: |
-  This snap adds a daemon that waits for USB plug events of block devices
-  and automatically mounts such devices under the /media dir when plugged
-  in.
-
-  The snap also ships an automount.unmount command that you can execute to
-  unmount automatically mounted devices.
-
+  This snap waits for USB plug events of block devices and automatically
+  mounts such devices under the /media dir when inserted and then installs
+  asserted snaps found there. 
 grade: stable
 confinement: strict
 
 environment:
   LD_LIBRARY_PATH: $SNAP/usr/local/lib
-  # Signal file to inform USB drive mounted
-  WATCHED: $SNAP_DATA/watched
+  # Signal file to inform on-mount-do daemon the mount point of USB
+  WATCHED: $SNAP_COMMON/watched
  
 apps:
   udisksd:
@@ -30,15 +26,12 @@ apps:
     command: bin/automount
     daemon: simple
     after: [ udisksd ]
-    plugs:
-      - client
   udiskctl:
     command: bin/udiskctl.sh
     plugs:
-      - client
-  list:
-    command: bin/list
-    plugs: [ snapd-control ]
+      - block-devices
+      - hardware-observe
+      - mount-observe
   on-mount-do:
     command: bin/on-mount-do
     daemon: simple
@@ -52,19 +45,22 @@ plugs:
     interface: udisks2
   net-bind:
     interface: network-bind
-
+  network:
+    interface: network
+  removable-media:
+    interface: removable-media
 
 layout:
   /var/lib/udisks2:
     bind: $SNAP_DATA/var/lib/udisks2
-  /etc/udisks2/udisks2.conf:
-    bind-file: $SNAP/etc/udisks2/udisks2.conf
   /etc/libblockdev/conf.d:
     bind: $SNAP/etc/libblockdev/conf.d
   /usr/local/etc/udisks2:
     bind: $SNAP/usr/local/etc/udisks2
   /etc/crypttab:
     bind-file: $SNAP/etc/crypttab
+  /usr/sbin/dumpe2fs:
+    bind-file: $SNAP/usr/sbin/dumpe2fs
 
 parts:
   actions:
@@ -74,38 +70,54 @@ parts:
     plugin: nil
     stage-packages: [ curl, inotify-tools ] 
   automount:
-    source: .
+    source: scripts
+    plugin: dump
+  pkgs:
     plugin: nil
-    override-build: |
-      mkdir $SNAPCRAFT_PART_INSTALL/bin
-      cp -av automount $SNAPCRAFT_PART_INSTALL/bin/
-      cp -av udiskctl.sh $SNAPCRAFT_PART_INSTALL/bin/
+    stage-packages: [ mount, e2fsprogs ]
+    organize:
+      sbin/dumpe2fs: usr/sbin/dumpe2fs
+      bin/umount: usr/bin/umount
   udisks:
     source: https://github.com/storaged-project/udisks.git
-    source-tag: udisks-2.6.4
+    source-tag: udisks-2.8.4
     plugin: autotools
     override-pull: |
       snapcraftctl pull
       git apply -v ../../../udisksd.patch
     autotools-configure-parameters: ["--enable-fhs-media"]
-    #install-via: destdir
     build-packages:
-        - pkg-config
-        - xsltproc
-        - gtk-doc-tools
-        - intltool
-        - libglib2.0-dev
-        - udev
-        - libgudev-1.0-dev
-        - libpolkit-gobject-1-dev
-        - libpolkit-agent-1-dev
-        - libacl1-dev
-        - libgirepository1.0-dev
-        - gobject-introspection
-        - libatasmart-dev
-        - libsystemd-dev
-        - libmount-dev
-        - gnome-common
+         - gnome-common
+         - gobject-introspection
+         - gtk-doc-tools
+         - intltool
+         - libacl1-dev
+         - libatasmart-dev
+         - libblockdev-btrfs-dev
+         - libblockdev-crypto-dev
+         - libblockdev-dev
+         - libblockdev-dm-dev
+         - libblockdev-fs-dev
+         - libblockdev-kbd-dev
+         - libblockdev-loop-dev
+         - libblockdev-lvm-dbus-dev
+         - libblockdev-lvm-dev
+         - libblockdev-mdraid-dev
+         - libblockdev-mpath-dev
+         - libblockdev-part-dev
+         - libblockdev-part-err-dev
+         - libblockdev-swap-dev
+         - libblockdev-utils-dev
+         - libgirepository1.0-dev
+         - libglib2.0-dev
+         - libgudev-1.0-dev
+         - libmount-dev
+         - libpolkit-agent-1-dev
+         - libpolkit-gobject-1-dev
+         - libsystemd-dev
+         - pkg-config
+         - udev
+         - xsltproc
     stage-packages:
         - libacl1
         - libatasmart4
@@ -116,19 +128,14 @@ parts:
         - libpolkit-gobject-1-0
         - parted
         - libmount1
-    filesets:
-      licenses:
-          - usr/share/doc/*/*copyright*
-      binaries:
-          - usr/local/bin/udisksctl
-          - usr/local/libexec/udisks2/udisksd
-          - usr/local/lib
+        - libblockdev2
+        - libblockdev-swap2
+        - libblockdev-loop2
+        - libblockdev-crypto2
+        - libblockdev-mdraid2
+        - libblockdev-part2
+        - libblockdev-fs2
     prime:
-        - $binaries
-        - $licenses
-        - lib
         - -lib/pkgconfig
         - -lib/systemd
         - -lib/cgmanager
-        - sbin
-        - usr/lib/*/*.so*
