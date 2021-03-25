@@ -43,10 +43,6 @@ slots:
 plugs:
   client:
     interface: udisks2
-  net-bind:
-    interface: network-bind
-  network:
-    interface: network
   removable-media:
     interface: removable-media
 
