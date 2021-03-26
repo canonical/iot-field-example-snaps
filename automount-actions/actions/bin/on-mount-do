@@ -1,12 +1,11 @@
 #!/bin/bash
 
-LOG_SNAP_COMMON=$SNAP_COMMON/auto-install-usb.log
-MSG=""
+LOG_SNAP_COMMON=${SNAP_COMMON}/auto-install-usb.log
 
 # log to both SNAP_COMMON and the mounted partition
 function log(){
-  echo -e "`date -Iseconds` ${1}" >> $LOG_SNAP_COMMON
-  echo -e "`date -Iseconds` ${1}" >> $LOG_MOUNTED
+  echo -e "`date -Iseconds` ${1}" >> ${LOG_SNAP_COMMON}
+  echo -e "`date -Iseconds` ${1}" >> ${LOG_MOUNTED}
 }
 
 # log with echo to both SNAP_COMMON and the mounted partition
@@ -89,7 +88,9 @@ do
     # ack of assertion failed, so quit
     [[ ${FAILED} ]] && break
 
+    INSTALL_SUCCEEDED=0
     for ASNAP in ${SNAPS}; do
+      CHANNEL_SUCCEEDED=0
       SNAP_RES_FILE="${SNAP_COMMON}/${ASNAP}_result.${DT}"
       # install the snap
       ${SNAP}/usr/bin/curl -o "${SNAP_RES_FILE}" -sS --unix-socket /run/snapd.socket --form snap=@${MNT}/${ASNAP} http://localhost/v2/snaps
@@ -103,23 +104,30 @@ do
         # where 14 loops takes 19.1 minutes	
         IDX=0
         SLEEP=2
+        CHANNEL_SUCCEEDED=1
         while [ $IDX -lt 14 ]; do
           sleep $SLEEP
           ${SNAP}/usr/bin/curl -X POST -o "${SNAP_RES_FILE}.channel" --header "Content-Type: application/json"  --data '{"action":"switch","channel":"stable"}' -sS --unix-socket /run/snapd.socket http://localhost/v2/snaps/${SNAPNAME}
           grep -Iq '"status":"Accepted"' ${SNAP_RES_FILE}.channel
           if [[ "$?" == "0" ]]; then
             logecho "${SNAPNAME} is now following stable"
-            SUCCEEDED=0
+            CHANNEL_SUCCEEDED=0
             break
           fi
           let IDX=$IDX+1
           let SLEEP=${SLEEP}*2
         done
-        [[ ! $SUCCEEDED ]] && logecho "WARNING: Unable to configure ${SNAPNAME} channel"
+        [[ ! ${CHANNEL_SUCCEEDED} ]] && logecho "WARNING: Unable to configure ${SNAPNAME} channel"
       else
+        INSTALL_SUCCEEDED=1
         logecho "Install of ${ASNAP} failed. This installation iteration is STOPPING."
         break
       fi
     done
+    if [ $INSTALL_SUCCEEDED -eq 0 ]; then
+      logecho "AUTO INSTALL RESULT: All snaps installed. Ending"
+    else
+      logecho "AUTO INSTALL RESULT: Not all snaps installed. Process incomplete." 
+    fi
   done
 done
