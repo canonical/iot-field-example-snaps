@@ -80,7 +80,7 @@ parts:
     plugin: autotools
     override-pull: |
       snapcraftctl pull
-      git apply -v ../../../udisksd.patch
+      git apply -v $SNAPCRAFT_PROJECT_DIR/udisksd.patch
     autotools-configure-parameters: ["--enable-fhs-media"]
     build-packages:
          - gnome-common
