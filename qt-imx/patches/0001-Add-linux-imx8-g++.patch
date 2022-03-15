@@ -1,0 +1,81 @@
+From ed75c6644d3705e54be161c9b745f4f053d6ac36 Mon Sep 17 00:00:00 2001
+From: Isaac True <isaac.true@canonical.com>
+Date: Tue, 15 Mar 2022 18:13:45 +0000
+Subject: [PATCH] Add linux-imx8-g++
+
+---
+ mkspecs/devices/linux-imx8-g++/qmake.conf     | 21 ++++++++++++
+ .../devices/linux-imx8-g++/qplatformdefs.h    | 34 +++++++++++++++++++
+ 2 files changed, 55 insertions(+)
+ create mode 100644 mkspecs/devices/linux-imx8-g++/qmake.conf
+ create mode 100644 mkspecs/devices/linux-imx8-g++/qplatformdefs.h
+
+diff --git a/mkspecs/devices/linux-imx8-g++/qmake.conf b/mkspecs/devices/linux-imx8-g++/qmake.conf
+new file mode 100644
+index 0000000000..979dceea21
+--- /dev/null
++++ b/mkspecs/devices/linux-imx8-g++/qmake.conf
+@@ -0,0 +1,21 @@
++#
++# qmake configuration for the Freescale iMX8 boards
++#
++# Derived from linux-imx6-g++
++
++include(../common/linux_device_pre.conf)
++
++QMAKE_LIBS_EGL         += -lEGL
++QMAKE_LIBS_OPENGL_ES2  += -lGLESv2 -lEGL -lGAL
++QMAKE_LIBS_OPENVG      += -lOpenVG -lEGL -lGAL
++
++IMX8_CFLAGS             = -DLINUX=1 -DEGL_API_FB=1
++QMAKE_CFLAGS           += $$IMX8_CFLAGS
++QMAKE_CXXFLAGS         += $$IMX8_CFLAGS
++
++# Preferred eglfs backend
++EGLFS_DEVICE_INTEGRATION = eglfs_viv
++
++# include(../common/linux_arm_device_post.conf)
++
++load(qt_config)
+diff --git a/mkspecs/devices/linux-imx8-g++/qplatformdefs.h b/mkspecs/devices/linux-imx8-g++/qplatformdefs.h
+new file mode 100644
+index 0000000000..5ae49b35dd
+--- /dev/null
++++ b/mkspecs/devices/linux-imx8-g++/qplatformdefs.h
+@@ -0,0 +1,34 @@
++/****************************************************************************
++**
++** Copyright (C) 2015 The Qt Company Ltd.
++** Contact: http://www.qt.io/licensing/
++**
++** This file is part of the qmake spec of the Qt Toolkit.
++**
++** $QT_BEGIN_LICENSE:LGPL21$
++** Commercial License Usage
++** Licensees holding valid commercial Qt licenses may use this file in
++** accordance with the commercial license agreement provided with the
++** Software or, alternatively, in accordance with the terms contained in
++** a written agreement between you and The Qt Company. For licensing terms
++** and conditions see http://www.qt.io/terms-conditions. For further
++** information use the contact form at http://www.qt.io/contact-us.
++**
++** GNU Lesser General Public License Usage
++** Alternatively, this file may be used under the terms of the GNU Lesser
++** General Public License version 2.1 or version 3 as published by the Free
++** Software Foundation and appearing in the file LICENSE.LGPLv21 and
++** LICENSE.LGPLv3 included in the packaging of this file. Please review the
++** following information to ensure the GNU Lesser General Public License
++** requirements will be met: https://www.gnu.org/licenses/lgpl.html and
++** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
++**
++** As a special exception, The Qt Company gives you certain additional
++** rights. These rights are described in The Qt Company LGPL Exception
++** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
++**
++** $QT_END_LICENSE$
++**
++****************************************************************************/
++
++#include "../../linux-g++/qplatformdefs.h"
+--
+2.25.1
