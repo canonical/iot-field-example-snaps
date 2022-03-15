@@ -34,7 +34,8 @@ parts:
       unlink ${SNAPCRAFT_PART_INSTALL}/usr/lib/libvulkan.so
       unlink ${SNAPCRAFT_PART_INSTALL}/usr/lib/libvulkan.so.1
       # Remove execute bit
-      chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/*.so*
+      chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/lib*.so*
+      chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/dri/*.so
   qtbase:
     after:
       - imx-gpu-viv
