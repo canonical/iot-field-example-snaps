@@ -1,6 +1,6 @@
 name: qt-local-snap
 base: core20
-version: '0.1'
+version: '5.6.3'
 summary: Single-line elevator pitch for your amazing snap
 description: |
   This is my-snap's description. You have a paragraph or two to tell the
@@ -23,16 +23,13 @@ parts:
         echo "not supported!"
         exit -1
       fi
-      wget https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/imx-gpu-viv-6.4.0.p2.4-${WGET_ARCH}.bin \
+      wget https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/imx-gpu-viv-6.2.4.p4.0-${WGET_ARCH}.bin \
         -O ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
       chmod a+x ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
       ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin --auto-accept --force
     override-build: |
       cp -r ${SNAPCRAFT_PART_BUILD}/imx-gpu-viv-*/gpu-core/{etc,usr} \
         ${SNAPCRAFT_PART_INSTALL}/
-      # Remove broken symlinks
-      unlink ${SNAPCRAFT_PART_INSTALL}/usr/lib/libvulkan.so
-      unlink ${SNAPCRAFT_PART_INSTALL}/usr/lib/libvulkan.so.1
       # Remove execute bit
       chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/lib*.so*
       chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/dri/*.so
@@ -64,9 +61,12 @@ parts:
       - libicu66
       - libcrypt1
       - libdbus-1-3
+      - libffi7
     override-pull: |
       snapcraftctl pull
-      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0001-Add-linux-imx8-g++.patch
+      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
+      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0002-Adjust-library-names-in-eglfs-viv-test.patch
+      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0003-Adjust-library-names-for-linux-imx6-g.patch
     override-build: |
       if [ "${SNAPCRAFT_TARGET_ARCH}" = "armhf" ]; then
         export DEVICE="linux-imx6-g++"
@@ -92,7 +92,7 @@ parts:
         -prefix /usr/local/qt5 -sysroot ${SNAPCRAFT_PART_INSTALL} \
         -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -no-kms -no-directfb -no-linuxfb \
         -device ${DEVICE} -device-option CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}- \
-        -no-alsa -no-audio-backend -no-openssl -no-use-gold-linker -v
+        -no-alsa -no-audio-backend -no-openssl -no-use-gold-linker -pkg-config
 
       make -j$(nproc)
 
@@ -106,6 +106,7 @@ build-packages:
   - build-essential
   - perl
   - python3
+  - pkg-config
   - g++-${SNAPCRAFT_ARCH_TRIPLET}
   - gcc-${SNAPCRAFT_ARCH_TRIPLET}
   - binutils-${SNAPCRAFT_ARCH_TRIPLET}
