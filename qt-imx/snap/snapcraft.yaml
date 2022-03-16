@@ -98,7 +98,7 @@ parts:
 
       make install
     stage:
-      - usr/local/qt5
+      - -lib
 
 
 build-packages:
