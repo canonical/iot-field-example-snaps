@@ -28,8 +28,10 @@ parts:
       chmod a+x ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
       ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin --auto-accept --force
     override-build: |
-      cp -r ${SNAPCRAFT_PART_BUILD}/imx-gpu-viv-*/gpu-core/{etc,usr} \
+      cp -r ${SNAPCRAFT_PART_BUILD}/imx-gpu-viv-*/gpu-core/usr \
         ${SNAPCRAFT_PART_INSTALL}/
+      install -D -m 0644 ${SNAPCRAFT_PART_BUILD}/imx-gpu-viv-*/gpu-core/etc/Vivante.icd \
+        ${SNAPCRAFT_PART_INSTALL}/etc/OpenCL/vendors/Vivante.icd
       # Remove execute bit
       chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/lib*.so*
       chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/dri/*.so
@@ -99,7 +101,21 @@ parts:
       make install
     stage:
       - -lib
+  hello-world:
+    after:
+      - qtbase
+    plugin: nil
+    override-build: |
+      ${SNAPCRAFT_PROJECT_DIR}/parts/qt5/install/usr/local/qt5/bin/qmake
+      make -j$(nproc)
+      make install
 
+apps:
+  hello-world:
+    command: opt/hello-world/bin/hello-world
+    plugs:
+      - opengl
+      - hardware-observe
 
 build-packages:
   - cmake
@@ -107,6 +123,21 @@ build-packages:
   - perl
   - python3
   - pkg-config
-  - g++-${SNAPCRAFT_ARCH_TRIPLET}
-  - gcc-${SNAPCRAFT_ARCH_TRIPLET}
-  - binutils-${SNAPCRAFT_ARCH_TRIPLET}
+  - on amd64:
+    - g++-${SNAPCRAFT_ARCH_TRIPLET}
+    - gcc-${SNAPCRAFT_ARCH_TRIPLET}
+    - binutils-${SNAPCRAFT_ARCH_TRIPLET}
+
+layout:
+  /etc/glvnd:
+    bind: $SNAP/etc/glvnd
+  /usr/share/X11/xkb:
+    bind: $SNAP/usr/share/X11/xkb
+  /usr/share/fonts:
+    bind: $SNAP/usr/share/fonts
+  /usr/share/glvnd:
+    bind: $SNAP/usr/share/glvnd
+  /usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri:
+    bind: $SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
+  /usr/share/libdrm:
+    bind: $SNAP/usr/share/libdrm
