@@ -43,7 +43,7 @@ parts:
     source-tag: v5.6.3
     source-depth: 1
     build-environment:
-      - PATH: "/usr/lib/ccache:${PATH}"
+      - PATH: /usr/lib/ccache:${PATH}
     stage-packages:
       # Qt needs a lot of dev packages from the target arch to build
       # Normally these would go in build-packages but Qt does a lot of
@@ -105,10 +105,11 @@ parts:
     after:
       - qtbase
     plugin: nil
+    source: hello-world
     override-build: |
       ${SNAPCRAFT_PROJECT_DIR}/parts/qt5/install/usr/local/qt5/bin/qmake
       make -j$(nproc)
-      make install
+      make INSTALL_ROOT=${SNAPCRAFT_PART_INSTALL} install
 
 apps:
   hello-world:
