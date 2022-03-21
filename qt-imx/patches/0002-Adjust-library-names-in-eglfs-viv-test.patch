@@ -6,19 +6,18 @@ Subject: [PATCH 2/3] Adjust library names in eglfs-viv test
 Change-Id: I8d1e8d274166d3cb745fa8b5f6ace9e143ee8afe
 Signed-off-by: Isaac True <isaac.true@canonical.com>
 ---
- config.tests/qpa/eglfs-viv/eglfs-viv.pro | 2 +-
+ qtbase/config.tests/qpa/eglfs-viv/eglfs-viv.pro | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/config.tests/qpa/eglfs-viv/eglfs-viv.pro b/config.tests/qpa/eglfs-viv/eglfs-viv.pro
+diff --git a/qtbase/config.tests/qpa/eglfs-viv/eglfs-viv.pro b/qtbase/config.tests/qpa/eglfs-viv/eglfs-viv.pro
 index 99776940ec..11c62d8930 100644
---- a/config.tests/qpa/eglfs-viv/eglfs-viv.pro
-+++ b/config.tests/qpa/eglfs-viv/eglfs-viv.pro
+--- a/qtbase/config.tests/qpa/eglfs-viv/eglfs-viv.pro
++++ b/qtbase/config.tests/qpa/eglfs-viv/eglfs-viv.pro
 @@ -3,4 +3,4 @@ DEFINES += LINUX=1 EGL_API_FB=1
- 
+
  CONFIG -= qt
- 
+
 -LIBS += -lEGL -lGLESv2 -lGAL
 +LIBS += -lEGL-fb -lGLESv2-fb -lGAL-fb
--- 
+--
 2.34.1
-

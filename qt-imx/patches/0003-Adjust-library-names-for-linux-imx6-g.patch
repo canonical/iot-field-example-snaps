@@ -6,26 +6,25 @@ Subject: [PATCH 3/3] Adjust library names for linux-imx6-g++
 Change-Id: I4b32e3dc8fa16ca8469729d7610e9e51c575b472
 Signed-off-by: Isaac True <isaac.true@canonical.com>
 ---
- mkspecs/devices/linux-imx6-g++/qmake.conf | 6 +++---
+ qtbase/mkspecs/devices/linux-imx6-g++/qmake.conf | 6 +++---
  1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/mkspecs/devices/linux-imx6-g++/qmake.conf b/mkspecs/devices/linux-imx6-g++/qmake.conf
+diff --git a/qtbase/mkspecs/devices/linux-imx6-g++/qmake.conf b/qtbase/mkspecs/devices/linux-imx6-g++/qmake.conf
 index 46d631796d..a02358808f 100644
---- a/mkspecs/devices/linux-imx6-g++/qmake.conf
-+++ b/mkspecs/devices/linux-imx6-g++/qmake.conf
+--- a/qtbase/mkspecs/devices/linux-imx6-g++/qmake.conf
++++ b/qtbase/mkspecs/devices/linux-imx6-g++/qmake.conf
 @@ -21,9 +21,9 @@
- 
+
  include(../common/linux_device_pre.conf)
- 
+
 -QMAKE_LIBS_EGL         += -lEGL
 -QMAKE_LIBS_OPENGL_ES2  += -lGLESv2 -lEGL -lGAL
 -QMAKE_LIBS_OPENVG      += -lOpenVG -lEGL -lGAL
 +QMAKE_LIBS_EGL         += -lEGL-fb
 +QMAKE_LIBS_OPENGL_ES2  += -lGLESv2-fb -lEGL-fb -lGAL-fb
 +QMAKE_LIBS_OPENVG      += -lOpenVG -lEGL-fb -lGAL-fb
- 
+
  IMX6_CFLAGS             = -march=armv7-a -mfpu=neon -DLINUX=1 -DEGL_API_FB=1
  QMAKE_CFLAGS           += $$IMX6_CFLAGS
--- 
+--
 2.34.1
-

@@ -1,12 +1,16 @@
-name: qt-local-snap
+name: qt-imx
 base: core20
 version: '5.6.3'
-summary: Single-line elevator pitch for your amazing snap
+summary: Qt libraries for the i.MX6 & 8 SoCs
 description: |
-  This is my-snap's description. You have a paragraph or two to tell the
-  most important story about your snap. Keep it under 100 words though,
-  we live in tweetspace and your description wants to look good in the snap
-  store.
+  Qt application libraries compiled with support for the eglfs backend on i.MX 6
+  & 8 SoCs.
+
+  Users can either use this snap in `stage-snaps` to utilise the prebuilt
+  libraries for their application, or extend this snap by adding the appropriate
+  build steps.
+
+  The Qt libraries are available in the /usr/local/qt5 directory in the snap.
 
 grade: stable
 confinement: strict
@@ -37,7 +41,7 @@ parts:
     after:
       - imx-gpu-viv
     plugin: nil
-    source: https://github.com/qt/qtbase.git
+    source: https://github.com/qt/qt5.git
     source-tag: v5.6.3
     source-depth: 1
     build-environment:
@@ -92,7 +96,8 @@ parts:
         -prefix /usr/local/qt5 -sysroot ${SNAPCRAFT_PART_INSTALL} \
         -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -no-kms -no-directfb -no-linuxfb \
         -device ${DEVICE} -device-option CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}- \
-        -no-alsa -no-audio-backend -no-openssl -no-use-gold-linker -pkg-config
+        -no-alsa -no-audio-backend -no-openssl -no-use-gold-linker -pkg-config \
+        -skip qtwebkit
 
       make -j$(nproc)
 
@@ -107,6 +112,7 @@ build-packages:
   - perl
   - python3
   - pkg-config
-  - g++-${SNAPCRAFT_ARCH_TRIPLET}
-  - gcc-${SNAPCRAFT_ARCH_TRIPLET}
-  - binutils-${SNAPCRAFT_ARCH_TRIPLET}
+  - on amd64:
+    - g++-${SNAPCRAFT_ARCH_TRIPLET}
+    - gcc-${SNAPCRAFT_ARCH_TRIPLET}
+    - binutils-${SNAPCRAFT_ARCH_TRIPLET}
