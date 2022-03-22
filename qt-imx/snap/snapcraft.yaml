@@ -1,12 +1,19 @@
-name: qt-local-snap
+name: qt-imx
 base: core20
 version: '5.6.3'
-summary: Single-line elevator pitch for your amazing snap
+summary: Qt application libraries for i.MX 6 & 8 SoCs
 description: |
-  This is my-snap's description. You have a paragraph or two to tell the
-  most important story about your snap. Keep it under 100 words though,
-  we live in tweetspace and your description wants to look good in the snap
-  store.
+  Qt application libraries compiled with support for the eglfs backend on i.MX
+  6 & 8 SoCs.
+
+  Users can either use this snap in `stage-snaps` to utilise the prebuilt
+  libraries for their application, or extend this snap by adding the appropriate build steps.
+
+  The Qt libraries are available in the /usr/local/qt5 directory in the snap.
+
+  As part of the build process, the GPU library binaries for the SoCs are
+  downloaded, extracted, and added to the snap. It's assumed you know what
+  you're doing, license-wise, if you're using and/or distributing this snap.
 
 grade: stable
 confinement: strict
