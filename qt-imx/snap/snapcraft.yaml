@@ -114,7 +114,7 @@ parts:
     plugin: nil
     source: hello-world
     override-build: |
-      ${SNAPCRAFT_PROJECT_DIR}/parts/qt5/install/usr/local/qt5/bin/qmake
+      ${SNAPCRAFT_PROJECT_DIR}/parts/qtbase/install/usr/local/qt5/bin/qmake
       make -j$(nproc)
       make INSTALL_ROOT=${SNAPCRAFT_PART_INSTALL} install
 
