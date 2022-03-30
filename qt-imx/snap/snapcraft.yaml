@@ -98,7 +98,7 @@ parts:
       unset LDFLAGS
 
       ./configure -debug -nomake tests -nomake examples -opensource -confirm-license \
-        -prefix /usr/local/qt5 -sysroot ${SNAPCRAFT_PART_INSTALL} \
+        -prefix /usr -sysroot ${SNAPCRAFT_PART_INSTALL} \
         -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -no-kms -no-directfb -no-linuxfb \
         -device ${DEVICE} -device-option CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}- \
         -no-alsa -no-audio-backend -no-openssl -no-use-gold-linker -pkg-config
@@ -108,19 +108,22 @@ parts:
       make install
     stage:
       - -lib
+      - -usr/doc
   hello-world:
     after:
       - qtbase
     plugin: nil
     source: hello-world
     override-build: |
-      ${SNAPCRAFT_PROJECT_DIR}/parts/qtbase/install/usr/local/qt5/bin/qmake
+      ${SNAPCRAFT_PROJECT_DIR}/parts/qtbase/install/usr/bin/qmake
       make -j$(nproc)
       make INSTALL_ROOT=${SNAPCRAFT_PART_INSTALL} install
 
 apps:
   hello-world:
     command: opt/hello-world/bin/hello-world
+    environment:
+      QT_PLUGIN_PATH: $SNAP/usr/plugins
     plugs:
       - opengl
       - hardware-observe
