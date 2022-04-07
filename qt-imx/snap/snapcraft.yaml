@@ -57,8 +57,10 @@ parts:
         - DEVICE_OPTIONS: "-device-option CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}-"
       - else:
         - DEVICE_OPTIONS: ""
+    build-packages:
+      - patch
     stage-packages:
-      # Qt needs a lot of dev packages from the target arch to build
+      # Qt needs a lot of packages from the target arch to build.
       # Normally these would go in build-packages but Qt does a lot of
       # cross-compilation for feature detection
       - libglvnd-dev
@@ -108,7 +110,7 @@ parts:
         -prefix /usr -sysroot ${SNAPCRAFT_PART_INSTALL} \
         -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -no-kms -no-directfb -no-linuxfb \
         -device ${DEVICE} ${DEVICE_OPTIONS} \
-        -no-alsa -no-audio-backend -no-openssl -no-use-gold-linker -pkg-config
+        -no-alsa -no-audio-backend -no-openssl -no-use-gold-linker
 
       make -j$(nproc)
 
@@ -142,7 +144,6 @@ build-packages:
   - build-essential
   - perl
   - python3
-  - pkg-config
   - ccache
   - on amd64:
     - g++-${SNAPCRAFT_ARCH_TRIPLET}
