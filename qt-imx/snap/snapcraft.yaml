@@ -53,6 +53,8 @@ parts:
     source-depth: 1
     build-environment:
       - PATH: /usr/lib/ccache:${PATH}
+      - on amd64:
+        - DEVICE_OPTIONS: "-device-option CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}-"
     stage-packages:
       # Qt needs a lot of dev packages from the target arch to build
       # Normally these would go in build-packages but Qt does a lot of
@@ -103,7 +105,7 @@ parts:
       ./configure -v -debug -nomake tests -nomake examples -opensource -confirm-license \
         -prefix /usr -sysroot ${SNAPCRAFT_PART_INSTALL} \
         -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -no-kms -no-directfb -no-linuxfb \
-        -device ${DEVICE} -device-option CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}- \
+        -device ${DEVICE} ${DEVICE_OPTIONS} \
         -no-alsa -no-audio-backend -no-openssl -no-use-gold-linker -pkg-config
 
       make -j$(nproc)
