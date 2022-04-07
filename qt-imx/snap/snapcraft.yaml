@@ -21,6 +21,8 @@ confinement: strict
 parts:
   imx-gpu-viv:
     plugin: nil
+    build-packages:
+      - wget
     override-pull: |
       if [ "${SNAPCRAFT_TARGET_ARCH}" = "armhf" ]; then
         export WGET_ARCH="aarch32"
