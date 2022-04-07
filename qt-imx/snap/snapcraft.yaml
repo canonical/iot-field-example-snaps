@@ -136,6 +136,7 @@ build-packages:
   - perl
   - python3
   - pkg-config
+  - ccache
   - on amd64:
     - g++-${SNAPCRAFT_ARCH_TRIPLET}
     - gcc-${SNAPCRAFT_ARCH_TRIPLET}
