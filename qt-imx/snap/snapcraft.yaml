@@ -140,6 +140,8 @@ build-packages:
     - g++-${SNAPCRAFT_ARCH_TRIPLET}
     - gcc-${SNAPCRAFT_ARCH_TRIPLET}
     - binutils-${SNAPCRAFT_ARCH_TRIPLET}
+  - else:
+    - g++
 
 layout:
   /etc/glvnd:
