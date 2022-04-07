@@ -112,6 +112,8 @@ parts:
     stage:
       - -lib
       - -usr/doc
+    prime:
+      - -usr/include
   hello-world:
     after:
       - qtbase
