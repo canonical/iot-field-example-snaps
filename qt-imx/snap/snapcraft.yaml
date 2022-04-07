@@ -99,7 +99,7 @@ parts:
       unset CXXFLAGS
       unset LDFLAGS
 
-      ./configure -debug -nomake tests -nomake examples -opensource -confirm-license \
+      ./configure -v -debug -nomake tests -nomake examples -opensource -confirm-license \
         -prefix /usr -sysroot ${SNAPCRAFT_PART_INSTALL} \
         -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -no-kms -no-directfb -no-linuxfb \
         -device ${DEVICE} -device-option CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}- \
