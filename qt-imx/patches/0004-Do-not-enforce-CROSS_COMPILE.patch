@@ -1,0 +1,20 @@
+diff --git a/mkspecs/features/device_config.prf b/mkspecs/features/device_config.prf
+index e0383ef5..c44394ef 100644
+--- a/mkspecs/features/device_config.prf
++++ b/mkspecs/features/device_config.prf
+@@ -29,10 +29,6 @@ defineTest(deviceSanityCheckCompiler) {
+     # to derive the compiler path from other device options.
+     exists($$compiler):return()
+ 
+-    # Check for possible reasons of failure
+-    # check if CROSS_COMPILE device-option is set
+-    isEmpty(CROSS_COMPILE):error("CROSS_COMPILE needs to be set via -device-option CROSS_COMPILE=<path>")
+-
+     # Check if QMAKE_CXX points to an executable.
+     ensurePathEnv()
+     for (dir, QMAKE_PATH_ENV) {
+@@ -43,4 +39,3 @@ defineTest(deviceSanityCheckCompiler) {
+     # QMAKE_CXX does not point to a compiler.
+     error("Compiler $$QMAKE_CXX not found. Check the value of CROSS_COMPILE -device-option")
+ }
+-

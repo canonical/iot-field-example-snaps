@@ -85,6 +85,7 @@ parts:
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0002-Adjust-library-names-in-eglfs-viv-test.patch
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0003-Adjust-library-names-for-linux-imx6-g.patch
+      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0004-Do-not-enforce-CROSS_COMPILE.patch
     override-build: |
       if [ "${SNAPCRAFT_TARGET_ARCH}" = "armhf" ]; then
         export DEVICE="linux-imx6-g++"
