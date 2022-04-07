@@ -73,7 +73,7 @@ parts:
       - libcrypt1
       - libdbus-1-3
       - libffi7
-      - libgcc-s1
+      - build-essential
     override-pull: |
       snapcraftctl pull
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
