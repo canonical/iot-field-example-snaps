@@ -71,6 +71,8 @@ parts:
       - libssl-dev
       - libpcre2-dev
       - libdbus-1-dev
+      - libts-dev
+      - libinput-dev
       - libc6
       - libbsd0
       - libglvnd0
@@ -111,6 +113,7 @@ parts:
         -prefix /usr -sysroot ${SNAPCRAFT_PART_INSTALL} \
         -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -no-kms -no-directfb -no-linuxfb \
         -device ${DEVICE} ${DEVICE_OPTIONS} \
+        -qt-freetype -no-pkg-config -no-mtdev \
         -no-alsa -no-audio-backend -no-openssl -no-use-gold-linker
 
       make -j$(nproc)
