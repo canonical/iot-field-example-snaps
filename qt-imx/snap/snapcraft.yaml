@@ -7,7 +7,8 @@ description: |
   6 & 8 SoCs.
 
   Users can either use this snap in `stage-snaps` to utilise the prebuilt
-  libraries for their application, or extend this snap by adding the appropriate build steps.
+  libraries for their application, or extend this snap by adding the appropriate
+  build steps.
 
   The Qt libraries are available in the /usr/local/qt5 directory in the snap.
 
@@ -44,6 +45,8 @@ parts:
       # Remove execute bit
       chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/lib*.so*
       chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/dri/*.so
+    stage:
+      - -usr/lib/pkgconfig
   qtbase:
     after:
       - imx-gpu-viv
