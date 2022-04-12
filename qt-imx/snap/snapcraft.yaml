@@ -79,8 +79,6 @@ parts:
       - libts-dev
       - libinput-dev
       - libfontconfig-dev
-      - libwayland-dev
-      - libwayland-egl-backend-dev
       - libc6
       - libbsd0
       - libglvnd0
