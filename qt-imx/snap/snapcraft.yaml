@@ -46,7 +46,9 @@ parts:
       chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/lib*.so*
       chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/dri/*.so
     stage:
-      - -usr/lib/pkgconfig
+      - -*
+    prime:
+      - -*
   qtbase:
     after:
       - imx-gpu-viv
@@ -91,10 +93,12 @@ parts:
     override-pull: |
       snapcraftctl pull
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
-      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0002-Adjust-library-names-in-eglfs-viv-test.patch
-      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0003-Adjust-library-names-for-linux-imx6-g.patch
-      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0004-Do-not-enforce-CROSS_COMPILE.patch
+      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0002-Do-not-enforce-CROSS_COMPILE.patch
     override-build: |
+      # Copy GPU libraries
+      cp -ra ${SNAPCRAFT_PROJECT_DIR}/parts/imx-gpu-viv/install/usr/* \
+        ${SNAPCRAFT_PART_INSTALL}/usr/
+
       if [ "${SNAPCRAFT_TARGET_ARCH}" = "armhf" ]; then
         export DEVICE="linux-imx6-g++"
       elif [ "${SNAPCRAFT_TARGET_ARCH}" = "arm64" ]; then
