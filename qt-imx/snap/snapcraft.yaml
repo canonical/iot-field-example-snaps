@@ -50,22 +50,10 @@ parts:
     prime:
       - -usr/include
       - -usr/lib/pkgconfig
-  qtbase:
+  sysroot:
     after:
       - imx-gpu-viv
     plugin: nil
-    source: https://github.com/qt/qtbase.git
-    source-tag: v5.6.3
-    source-depth: 1
-    build-environment:
-      - PATH: /usr/lib/ccache:${PATH}
-      - on amd64:
-        - DEVICE_OPTIONS: "-device-option CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}-"
-      - else:
-        - DEVICE_OPTIONS: ""
-    build-packages:
-      - patch
-      - pkg-config
     stage-packages:
       # Qt needs a lot of packages from the target arch to build.
       # Normally these would go in build-packages but Qt does a lot of
@@ -101,12 +89,6 @@ parts:
       - libxext6
       - libxfixes3
       - libxdamage1
-      - strace
-      - gdb
-    override-pull: |
-      snapcraftctl pull
-      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
-      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0002-Do-not-enforce-CROSS_COMPILE.patch
     override-build: |
       # Move all files from /lib to /usr/lib and create a symlink
       cp -r ${SNAPCRAFT_PART_INSTALL}/lib/* ${SNAPCRAFT_PART_INSTALL}/usr/lib/
@@ -123,7 +105,35 @@ parts:
       cp -ra \
         ${SNAPCRAFT_PROJECT_DIR}/parts/imx-gpu-viv/install/usr/include \
         ${SNAPCRAFT_PART_INSTALL}/usr/
-
+    prime:
+      - -usr/include
+      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
+      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libdrm_*
+      - -usr/lib/*.a
+      - -usr/lib/pkgconfig
+      - -usr/lib/cmake
+      - -usr/share/doc
+  qtbase:
+    after:
+      - sysroot
+    plugin: nil
+    source: https://github.com/qt/qtbase.git
+    source-tag: v5.6.3
+    source-depth: 1
+    build-environment:
+      - PATH: /usr/lib/ccache:${PATH}
+      - on amd64:
+        - DEVICE_OPTIONS: "-device-option CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}-"
+      - else:
+        - DEVICE_OPTIONS: ""
+    build-packages:
+      - patch
+      - pkg-config
+    override-pull: |
+      snapcraftctl pull
+      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
+      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0002-Do-not-enforce-CROSS_COMPILE.patch
+    override-build: |
       if [ "${SNAPCRAFT_TARGET_ARCH}" = "armhf" ]; then
         export DEVICE="linux-imx6-g++"
       elif [ "${SNAPCRAFT_TARGET_ARCH}" = "arm64" ]; then
@@ -142,7 +152,7 @@ parts:
       unset LDFLAGS
 
       ./configure -v -debug -nomake tests -nomake examples -opensource -confirm-license \
-        -prefix /usr -sysroot ${SNAPCRAFT_PART_INSTALL} \
+        -prefix /usr -sysroot ${SNAPCRAFT_PROJECT_DIR}/parts/sysroot/install \
         -opengl es2 -no-pulseaudio -qpa eglfs -qt-xcb -qt-pcre \
         -qt-libjpeg -qt-libpng -qt-freetype -qt-zlib -qt-xkbcommon-x11 \
         -pkg-config -no-mtdev \
@@ -155,21 +165,20 @@ parts:
       make install
     prime:
       - -usr/include
-      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
-      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libdrm_*
       - -usr/lib/*.a
       - -usr/lib/*.prl
       - -usr/lib/pkgconfig
       - -usr/lib/cmake
       - -usr/lib/mkspecs
-      - -usr/share/doc
       - -usr/doc
-      - -lib
   hello-world:
     after:
       - qtbase
     plugin: nil
     source: hello-world
+    stage-packages:
+      - strace
+      - gdb
     override-build: |
       ${SNAPCRAFT_PROJECT_DIR}/parts/qtbase/install/usr/bin/qmake
       make -j$(nproc)
