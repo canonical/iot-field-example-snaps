@@ -45,8 +45,6 @@ parts:
       # Remove execute bit
       chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/lib*.so*
       chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/dri/*.so
-    organize:
-      "usr/lib/*.so*": usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/
     prime:
       - -usr/include
       - -usr/lib/pkgconfig
