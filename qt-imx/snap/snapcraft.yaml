@@ -108,6 +108,9 @@ parts:
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0002-Do-not-enforce-CROSS_COMPILE.patch
     override-build: |
+      # Move all files from /lib to /usr/lib and create a symlink
+      cp -r ${SNAPCRAFT_PART_INSTALL}/lib/* ${SNAPCRAFT_PART_INSTALL}/usr/lib/
+      rm -rf ${SNAPCRAFT_PART_INSTALL}/lib
       ln -sr ${SNAPCRAFT_PART_INSTALL}/usr/lib ${SNAPCRAFT_PART_INSTALL}/lib
 
       # Copy GPU libraries
