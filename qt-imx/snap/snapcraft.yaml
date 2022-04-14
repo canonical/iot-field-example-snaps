@@ -21,7 +21,8 @@ confinement: devmode
 
 parts:
   imx-gpu-viv:
-    plugin: nil
+    plugin: dump
+    source: .
     build-packages:
       - wget
     override-pull: |
@@ -33,18 +34,20 @@ parts:
         echo "not supported!"
         exit -1
       fi
-      wget https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/imx-gpu-viv-6.2.4.p4.0-${WGET_ARCH}.bin \
+      wget https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/imx-gpu-viv-6.4.3.p0.0-${WGET_ARCH}.bin \
         -O ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
       chmod a+x ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
       ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin --auto-accept --force
-    override-build: |
-      cp -r ${SNAPCRAFT_PART_BUILD}/imx-gpu-viv-*/gpu-core/usr \
-        ${SNAPCRAFT_PART_INSTALL}/
-      install -D -m 0644 ${SNAPCRAFT_PART_BUILD}/imx-gpu-viv-*/gpu-core/etc/Vivante.icd \
-        ${SNAPCRAFT_PART_INSTALL}/etc/OpenCL/vendors/Vivante.icd
-      # Remove execute bit
-      chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/lib*.so*
-      chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/dri/*.so
+    organize:
+      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/fb/*: usr/lib/
+      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/*.so*: usr/lib/
+      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/pkgconfig: usr/lib/pkgconfig
+      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/dri: usr/lib/dri
+      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/include: usr/include
+      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/etc/Vivante.icd: etc/OpenCL/vendors/Vivante.icd
+    stage:
+      - -imx-gpu-viv.bin
+      - -imx-gpu-viv-6.4.3.p0.0-aarch64
     prime:
       - -usr/include
       - -usr/lib/pkgconfig
@@ -211,26 +214,6 @@ apps:
       - opengl
       - hardware-observe
       - framebuffer
-  hello-world-x11:
-    command: opt/hello-world/bin/hello-world
-    environment:
-      QT_PLUGIN_PATH: $SNAP/usr/plugins
-      QT_QPA_PLATFORM: xcb
-    plugs:
-      - opengl
-      - hardware-observe
-      - framebuffer
-      - x11
-  hello-world-wayland:
-    command: opt/hello-world/bin/hello-world
-    environment:
-      QT_PLUGIN_PATH: $SNAP/usr/plugins
-      QT_QPA_PLATFORM: wayland
-    plugs:
-      - opengl
-      - hardware-observe
-      - framebuffer
-      - wayland
 
 build-packages:
   - cmake
