@@ -113,6 +113,9 @@ parts:
       rm -rf ${SNAPCRAFT_PART_INSTALL}/lib
       ln -sr ${SNAPCRAFT_PART_INSTALL}/usr/lib ${SNAPCRAFT_PART_INSTALL}/lib
 
+      # Remove any mesa libraries which would interfere with the GPU libraries
+      rm -f ${SNAPCRAFT_PART_INSTALL}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/lib{GL*,EGL*,GLX*}
+
       # Copy GPU libraries
       cp --remove-destination -ra \
         ${SNAPCRAFT_PROJECT_DIR}/parts/imx-gpu-viv/install/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/* \
@@ -129,9 +132,6 @@ parts:
         echo "not supported!"
         exit -1
       fi
-
-      cp -r ${SNAPCRAFT_PART_BUILD}/../../imx-gpu-viv/install/usr \
-        ${SNAPCRAFT_PART_INSTALL}/
 
       # Unset all snapcraft build variables so they don't interfere
       unset LD
@@ -154,8 +154,9 @@ parts:
 
       make install
     prime:
-      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
       - -usr/include
+      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
+      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libdrm_*
       - -usr/lib/*.a
       - -usr/lib/*.prl
       - -usr/lib/pkgconfig
