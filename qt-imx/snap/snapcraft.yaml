@@ -163,6 +163,7 @@ apps:
     plugs:
       - opengl
       - hardware-observe
+      - framebuffer
 
 build-packages:
   - cmake
