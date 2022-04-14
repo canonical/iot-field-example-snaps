@@ -108,6 +108,8 @@ parts:
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0002-Do-not-enforce-CROSS_COMPILE.patch
     override-build: |
+      ln -sr ${SNAPCRAFT_PART_INSTALL}/usr/lib ${SNAPCRAFT_PART_INSTALL}/lib
+
       # Copy GPU libraries
       cp --remove-destination -ra \
         ${SNAPCRAFT_PROJECT_DIR}/parts/imx-gpu-viv/install/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/* \
@@ -148,8 +150,6 @@ parts:
       make -j$(nproc)
 
       make install
-    organize:
-      lib/*: usr/lib/
     prime:
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
       - -usr/include
