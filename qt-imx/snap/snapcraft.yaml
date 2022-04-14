@@ -17,7 +17,7 @@ description: |
   you're doing, license-wise, if you're using and/or distributing this snap.
 
 grade: stable
-confinement: strict
+confinement: devmode
 
 parts:
   imx-gpu-viv:
@@ -45,10 +45,11 @@ parts:
       # Remove execute bit
       chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/lib*.so*
       chmod a-x ${SNAPCRAFT_PART_INSTALL}/usr/lib/dri/*.so
-    stage:
-      - -*
+    organize:
+      "usr/lib/*.so*": usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/
     prime:
-      - -*
+      - -usr/include
+      - -usr/lib/pkgconfig
   qtbase:
     after:
       - imx-gpu-viv
@@ -64,6 +65,7 @@ parts:
         - DEVICE_OPTIONS: ""
     build-packages:
       - patch
+      - pkg-config
     stage-packages:
       # Qt needs a lot of packages from the target arch to build.
       # Normally these would go in build-packages but Qt does a lot of
@@ -88,13 +90,19 @@ parts:
       - libdbus-1-3
       - libffi7
       - libgcc-s1
+      - strace
+      - gdb
     override-pull: |
       snapcraftctl pull
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0002-Do-not-enforce-CROSS_COMPILE.patch
     override-build: |
       # Copy GPU libraries
-      cp -ra ${SNAPCRAFT_PROJECT_DIR}/parts/imx-gpu-viv/install/usr/* \
+      cp --remove-destination -ra \
+        ${SNAPCRAFT_PROJECT_DIR}/parts/imx-gpu-viv/install/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/* \
+        ${SNAPCRAFT_PART_INSTALL}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/
+      cp -ra \
+        ${SNAPCRAFT_PROJECT_DIR}/parts/imx-gpu-viv/install/usr/include \
         ${SNAPCRAFT_PART_INSTALL}/usr/
 
       if [ "${SNAPCRAFT_TARGET_ARCH}" = "armhf" ]; then
@@ -119,19 +127,24 @@ parts:
 
       ./configure -v -debug -nomake tests -nomake examples -opensource -confirm-license \
         -prefix /usr -sysroot ${SNAPCRAFT_PART_INSTALL} \
-        -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -no-kms -no-directfb -no-linuxfb \
+        -opengl es2 -no-pulseaudio -qpa eglfs -qt-xcb -qt-pcre \
+        -qt-libjpeg -qt-libpng -qt-freetype -qt-zlib -qt-xkbcommon-x11 \
+        -pkg-config -no-mtdev \
+        -xkb-config-root /snap/qt-imx/current/usr/share/X11/xkb \
         -device ${DEVICE} ${DEVICE_OPTIONS} \
-        -qt-freetype -pkg-config -no-mtdev -qt-zlib \
-        -no-alsa -no-audio-backend -no-openssl -no-use-gold-linker
+        -no-alsa -no-openssl -no-audio-backend -no-use-gold-linker
 
       make -j$(nproc)
 
       make install
-    stage:
-      - -lib
-      - -usr/doc
     prime:
+      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
       - -usr/include
+      - -usr/lib/*.a
+      - -usr/lib/*.prl
+      - -usr/lib/pkgconfig
+      - -usr/lib/cmake
+      - -usr/doc
   hello-world:
     after:
       - qtbase
@@ -177,3 +190,5 @@ layout:
     bind: $SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
   /usr/share/libdrm:
     bind: $SNAP/usr/share/libdrm
+  /usr/lib/fonts:
+    bind: $SNAP/usr/lib/fonts
