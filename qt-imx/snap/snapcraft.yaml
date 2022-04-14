@@ -107,6 +107,7 @@ parts:
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libdrm_*
       - -usr/lib/*.a
       - -usr/lib/pkgconfig
+      - -usr/lib/udev
       - -usr/lib/cmake
       - -usr/share/doc
   qtbase:
@@ -167,7 +168,7 @@ parts:
       - -usr/lib/*.prl
       - -usr/lib/pkgconfig
       - -usr/lib/cmake
-      - -usr/lib/mkspecs
+      - -usr/mkspecs
       - -usr/doc
   hello-world:
     after:
