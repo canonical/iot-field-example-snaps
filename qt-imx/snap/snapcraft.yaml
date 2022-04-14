@@ -152,7 +152,7 @@ parts:
       unset LDFLAGS
 
       ./configure -v -debug -nomake tests -nomake examples -opensource -confirm-license \
-        -prefix /usr -sysroot ${SNAPCRAFT_PROJECT_DIR}/parts/sysroot/install \
+        -prefix /usr -sysroot ${SNAPCRAFT_PROJECT_DIR}/stage \
         -opengl es2 -no-pulseaudio -qpa eglfs -qt-xcb -qt-pcre \
         -qt-libjpeg -qt-libpng -qt-freetype -qt-zlib -qt-xkbcommon-x11 \
         -pkg-config -no-mtdev \
