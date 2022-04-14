@@ -98,6 +98,10 @@ parts:
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libGL.*
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libEGL*
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libGLX*
+      - -usr/include/EGL
+      - -usr/include/GL
+      - -usr/include/GLES*
+      - -usr/include/KHR/khrplatform.h
     prime:
       - -usr/include
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
