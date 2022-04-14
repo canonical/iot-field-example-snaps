@@ -17,7 +17,7 @@ description: |
   you're doing, license-wise, if you're using and/or distributing this snap.
 
 grade: stable
-confinement: strict
+confinement: devmode
 
 parts:
   imx-gpu-viv:
