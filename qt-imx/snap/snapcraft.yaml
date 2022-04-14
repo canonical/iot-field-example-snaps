@@ -50,9 +50,7 @@ parts:
     prime:
       - -usr/include
       - -usr/lib/pkgconfig
-  sysroot:
-    after:
-      - imx-gpu-viv
+  dependencies:
     plugin: nil
     stage-packages:
       # Qt needs a lot of packages from the target arch to build.
@@ -90,21 +88,16 @@ parts:
       - libxfixes3
       - libxdamage1
     override-build: |
+      snapcraftctl build
       # Move all files from /lib to /usr/lib and create a symlink
       cp -r ${SNAPCRAFT_PART_INSTALL}/lib/* ${SNAPCRAFT_PART_INSTALL}/usr/lib/
       rm -rf ${SNAPCRAFT_PART_INSTALL}/lib
       ln -sr ${SNAPCRAFT_PART_INSTALL}/usr/lib ${SNAPCRAFT_PART_INSTALL}/lib
-
-      # Remove any mesa libraries which would interfere with the GPU libraries
-      rm -f ${SNAPCRAFT_PART_INSTALL}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/lib{GLES*,GL.*,EGL*,GLX*}
-
-      # Copy GPU libraries
-      cp --remove-destination -ra \
-        ${SNAPCRAFT_PROJECT_DIR}/parts/imx-gpu-viv/install/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/* \
-        ${SNAPCRAFT_PART_INSTALL}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/
-      cp -ra \
-        ${SNAPCRAFT_PROJECT_DIR}/parts/imx-gpu-viv/install/usr/include \
-        ${SNAPCRAFT_PART_INSTALL}/usr/
+    stage:
+      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libGLES*
+      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libGL.*
+      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libEGL*
+      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libGLX*
     prime:
       - -usr/include
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
@@ -115,7 +108,8 @@ parts:
       - -usr/share/doc
   qtbase:
     after:
-      - sysroot
+      - imx-gpu-viv
+      - dependencies
     plugin: nil
     source: https://github.com/qt/qtbase.git
     source-tag: v5.6.3
@@ -124,8 +118,16 @@ parts:
       - PATH: /usr/lib/ccache:${PATH}
       - on amd64:
         - DEVICE_OPTIONS: "-device-option CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}-"
+        - to armhf:
+          - DEVICE: "linux-imx6-g++"
+        - to arm64:
+          - DEVICE: "linux-imx8-g++"
       - else:
         - DEVICE_OPTIONS: ""
+        - to armhf:
+          - DEVICE: "linux-imx6-g++"
+        - to arm64:
+          - DEVICE: "linux-imx8-g++"
     build-packages:
       - patch
       - pkg-config
@@ -134,15 +136,6 @@ parts:
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0002-Do-not-enforce-CROSS_COMPILE.patch
     override-build: |
-      if [ "${SNAPCRAFT_TARGET_ARCH}" = "armhf" ]; then
-        export DEVICE="linux-imx6-g++"
-      elif [ "${SNAPCRAFT_TARGET_ARCH}" = "arm64" ]; then
-        export DEVICE="linux-imx8-g++"
-      else
-        echo "not supported!"
-        exit -1
-      fi
-
       # Unset all snapcraft build variables so they don't interfere
       unset LD
       unset CC
