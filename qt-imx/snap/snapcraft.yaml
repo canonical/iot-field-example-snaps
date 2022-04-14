@@ -1,4 +1,4 @@
-name: qt-imx
+name: itrue-qt-imx-snap
 base: core20
 version: '5.6.3'
 summary: Qt application libraries for i.MX 6 & 8 SoCs
