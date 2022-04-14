@@ -65,6 +65,7 @@ parts:
       - libts-dev
       - libinput-dev
       - libfontconfig-dev
+      - libwayland-dev
       - libc6
       - libbsd0
       - libglvnd0
@@ -162,6 +163,8 @@ parts:
       make -j$(nproc)
 
       make install
+    stage:
+      - -lib
     prime:
       - -usr/include
       - -usr/lib/*.a
@@ -208,6 +211,26 @@ apps:
       - opengl
       - hardware-observe
       - framebuffer
+  hello-world-x11:
+    command: opt/hello-world/bin/hello-world
+    environment:
+      QT_PLUGIN_PATH: $SNAP/usr/plugins
+      QT_QPA_PLATFORM: xcb
+    plugs:
+      - opengl
+      - hardware-observe
+      - framebuffer
+      - x11
+  hello-world-wayland:
+    command: opt/hello-world/bin/hello-world
+    environment:
+      QT_PLUGIN_PATH: $SNAP/usr/plugins
+      QT_QPA_PLATFORM: wayland
+    plugs:
+      - opengl
+      - hardware-observe
+      - framebuffer
+      - wayland
 
 build-packages:
   - cmake
