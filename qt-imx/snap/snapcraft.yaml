@@ -17,7 +17,11 @@ description: |
   you're doing, license-wise, if you're using and/or distributing this snap.
 
 grade: stable
-confinement: devmode
+confinement: strict
+
+plugs:
+  gpu:
+    interface: custom-device
 
 parts:
   imx-gpu-viv:
@@ -34,6 +38,7 @@ parts:
         echo "not supported!"
         exit -1
       fi
+      rm -f ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
       wget https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/imx-gpu-viv-6.4.3.p0.0-${WGET_ARCH}.bin \
         -O ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
       chmod a+x ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
@@ -198,6 +203,7 @@ apps:
       - opengl
       - hardware-observe
       - framebuffer
+      - gpu
   hello-world-dbg:
     command: usr/bin/strace $SNAP/opt/hello-world/bin/hello-world
     environment:
@@ -206,6 +212,7 @@ apps:
       - opengl
       - hardware-observe
       - framebuffer
+      - gpu
   hello-world-gdb:
     command: usr/bin/gdb $SNAP/opt/hello-world/bin/hello-world
     environment:
@@ -214,6 +221,7 @@ apps:
       - opengl
       - hardware-observe
       - framebuffer
+      - gpu
 
 build-packages:
   - cmake
