@@ -199,7 +199,7 @@ apps:
       - hardware-observe
       - framebuffer
   hello-world-dbg:
-    command: usr/bin/strace ${SNAP}/opt/hello-world/bin/hello-world
+    command: usr/bin/strace $SNAP/opt/hello-world/bin/hello-world
     environment:
       QT_PLUGIN_PATH: $SNAP/usr/plugins
     plugs:
@@ -207,7 +207,7 @@ apps:
       - hardware-observe
       - framebuffer
   hello-world-gdb:
-    command: usr/bin/gdb ${SNAP}/opt/hello-world/bin/hello-world
+    command: usr/bin/gdb $SNAP/opt/hello-world/bin/hello-world
     environment:
       QT_PLUGIN_PATH: $SNAP/usr/plugins
     plugs:
