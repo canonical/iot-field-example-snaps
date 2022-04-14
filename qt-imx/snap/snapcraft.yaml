@@ -92,6 +92,7 @@ parts:
       rm -rf ${SNAPCRAFT_PART_INSTALL}/lib
       ln -sr ${SNAPCRAFT_PART_INSTALL}/usr/lib ${SNAPCRAFT_PART_INSTALL}/lib
     stage:
+      # Remove all mesa GL libraries
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libGLES*
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libGL.*
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libEGL*
@@ -124,12 +125,12 @@ parts:
           - DEVICE: "linux-imx6-g++"
         - to arm64:
           - DEVICE: "linux-imx8-g++"
-      - else:
+      - on armhf:
         - DEVICE_OPTIONS: ""
-        - to armhf:
-          - DEVICE: "linux-imx6-g++"
-        - to arm64:
-          - DEVICE: "linux-imx8-g++"
+        - DEVICE: "linux-imx6-g++"
+      - on arm64:
+        - DEVICE_OPTIONS: ""
+        - DEVICE: "linux-imx8-g++"
     build-packages:
       - patch
       - pkg-config
@@ -145,6 +146,7 @@ parts:
       unset CFLAGS
       unset CXXFLAGS
       unset LDFLAGS
+      unset PKG_CONFIG_PATH
 
       ./configure -v -debug -nomake tests -nomake examples -opensource -confirm-license \
         -prefix /usr -sysroot ${SNAPCRAFT_PROJECT_DIR}/stage \
@@ -153,7 +155,8 @@ parts:
         -pkg-config -no-mtdev \
         -xkb-config-root /snap/qt-imx/current/usr/share/X11/xkb \
         -device ${DEVICE} ${DEVICE_OPTIONS} \
-        -no-alsa -no-openssl -no-audio-backend -no-use-gold-linker
+        -no-alsa -no-openssl -no-audio-backend -no-use-gold-linker \
+        -extprefix ${SNAPCRAFT_PART_INSTALL}/usr
 
       make -j$(nproc)
 
@@ -233,5 +236,3 @@ layout:
     bind: $SNAP/usr/share/libdrm
   /usr/lib/fonts:
     bind: $SNAP/usr/lib/fonts
-  /lib:
-    bind: $SNAP/lib
