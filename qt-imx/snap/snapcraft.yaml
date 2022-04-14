@@ -114,7 +114,7 @@ parts:
       ln -sr ${SNAPCRAFT_PART_INSTALL}/usr/lib ${SNAPCRAFT_PART_INSTALL}/lib
 
       # Remove any mesa libraries which would interfere with the GPU libraries
-      rm -f ${SNAPCRAFT_PART_INSTALL}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/lib{GL*,EGL*,GLX*}
+      rm -f ${SNAPCRAFT_PART_INSTALL}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/lib{GLES*,GL.*,EGL*,GLX*}
 
       # Copy GPU libraries
       cp --remove-destination -ra \
