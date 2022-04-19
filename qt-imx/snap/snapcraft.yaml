@@ -158,7 +158,7 @@ parts:
       unset LDFLAGS
       unset PKG_CONFIG_PATH
 
-      ./configure -v -debug -nomake tests -nomake examples -opensource -confirm-license \
+      ./configure -debug -nomake tests -nomake examples -opensource -confirm-license \
         -prefix /usr -sysroot ${SNAPCRAFT_PROJECT_DIR}/stage \
         -opengl es2 -no-pulseaudio -qpa eglfs -qt-xcb -qt-pcre \
         -qt-libjpeg -qt-libpng -qt-freetype -qt-zlib -qt-xkbcommon-x11 \
