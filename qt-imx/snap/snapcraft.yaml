@@ -119,12 +119,12 @@ parts:
       - -usr/lib/udev
       - -usr/lib/cmake
       - -usr/share/doc
-  qtbase:
+  qt5:
     after:
       - imx-gpu-viv
       - dependencies
     plugin: nil
-    source: https://github.com/qt/qtbase.git
+    source: https://github.com/qt/qt5.git
     source-tag: v5.6.3
     source-depth: 1
     build-environment:
@@ -166,7 +166,8 @@ parts:
         -xkb-config-root /snap/qt-imx/current/usr/share/X11/xkb \
         -device ${DEVICE} ${DEVICE_OPTIONS} \
         -no-alsa -no-openssl -no-audio-backend -no-use-gold-linker \
-        -extprefix ${SNAPCRAFT_PART_INSTALL}/usr
+        -extprefix ${SNAPCRAFT_PART_INSTALL}/usr \
+        -skip qtwebengine
 
       make -j$(nproc)
 
@@ -183,14 +184,14 @@ parts:
       - -usr/doc
   hello-world:
     after:
-      - qtbase
+      - qt5
     plugin: nil
     source: hello-world
     stage-packages:
       - strace
       - gdb
     override-build: |
-      ${SNAPCRAFT_PROJECT_DIR}/parts/qtbase/install/usr/bin/qmake
+      ${SNAPCRAFT_PROJECT_DIR}/parts/qt5/install/usr/bin/qmake
       make -j$(nproc)
       make INSTALL_ROOT=${SNAPCRAFT_PART_INSTALL} install
 

@@ -4,17 +4,17 @@ Date: Tue, 15 Mar 2022 18:13:45 +0000
 Subject: [PATCH 1/1] Added linux-imx8-g++
 
 ---
- mkspecs/devices/linux-imx8-g++/qmake.conf     | 21 ++++++++++++
+ qtbase/mkspecs/devices/linux-imx8-g++/qmake.conf     | 21 ++++++++++++
  .../devices/linux-imx8-g++/qplatformdefs.h    | 34 +++++++++++++++++++
  2 files changed, 55 insertions(+)
- create mode 100644 mkspecs/devices/linux-imx8-g++/qmake.conf
- create mode 100644 mkspecs/devices/linux-imx8-g++/qplatformdefs.h
+ create mode 100644 qtbase/mkspecs/devices/linux-imx8-g++/qmake.conf
+ create mode 100644 qtbase/mkspecs/devices/linux-imx8-g++/qplatformdefs.h
 
-diff --git a/mkspecs/devices/linux-imx8-g++/qmake.conf b/mkspecs/devices/linux-imx8-g++/qmake.conf
+diff --git a/qtbase/mkspecs/devices/linux-imx8-g++/qmake.conf b/qtbase/mkspecs/devices/linux-imx8-g++/qmake.conf
 new file mode 100644
 index 0000000000..979dceea21
 --- /dev/null
-+++ b/mkspecs/devices/linux-imx8-g++/qmake.conf
++++ b/qtbase/mkspecs/devices/linux-imx8-g++/qmake.conf
 @@ -0,0 +1,21 @@
 +#
 +# qmake configuration for the Freescale iMX8 boards
@@ -37,11 +37,11 @@ index 0000000000..979dceea21
 +# include(../common/linux_arm_device_post.conf)
 +
 +load(qt_config)
-diff --git a/mkspecs/devices/linux-imx8-g++/qplatformdefs.h b/mkspecs/devices/linux-imx8-g++/qplatformdefs.h
+diff --git a/qtbase/mkspecs/devices/linux-imx8-g++/qplatformdefs.h b/qtbase/mkspecs/devices/linux-imx8-g++/qplatformdefs.h
 new file mode 100644
 index 0000000000..5ae49b35dd
 --- /dev/null
-+++ b/mkspecs/devices/linux-imx8-g++/qplatformdefs.h
++++ b/qtbase/mkspecs/devices/linux-imx8-g++/qplatformdefs.h
 @@ -0,0 +1,34 @@
 +/****************************************************************************
 +**

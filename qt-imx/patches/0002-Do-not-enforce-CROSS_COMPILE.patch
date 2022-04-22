@@ -1,11 +1,11 @@
-diff --git a/mkspecs/features/device_config.prf b/mkspecs/features/device_config.prf
+diff --git a/qtbase/mkspecs/features/device_config.prf b/qtbase/mkspecs/features/device_config.prf
 index e0383ef5..c44394ef 100644
---- a/mkspecs/features/device_config.prf
-+++ b/mkspecs/features/device_config.prf
+--- a/qtbase/mkspecs/features/device_config.prf
++++ b/qtbase/mkspecs/features/device_config.prf
 @@ -29,10 +29,6 @@ defineTest(deviceSanityCheckCompiler) {
      # to derive the compiler path from other device options.
      exists($$compiler):return()
- 
+
 -    # Check for possible reasons of failure
 -    # check if CROSS_COMPILE device-option is set
 -    isEmpty(CROSS_COMPILE):error("CROSS_COMPILE needs to be set via -device-option CROSS_COMPILE=<path>")
