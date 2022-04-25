@@ -53,6 +53,7 @@ parts:
     stage:
       - -imx-gpu-viv.bin
       - -imx-gpu-viv-6.4.3.p0.0-aarch64
+      - -patches
     prime:
       - -usr/include
       - -usr/lib/pkgconfig
