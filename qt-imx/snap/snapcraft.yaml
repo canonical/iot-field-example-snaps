@@ -144,10 +144,12 @@ parts:
     build-packages:
       - patch
       - pkg-config
+      - python-is-python3
     override-pull: |
       snapcraftctl pull
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
       patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0002-Do-not-enforce-CROSS_COMPILE.patch
+      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0003-SocketCAN-Fix-compiler-error-SIOCGSTAMP-was-not-decl.patch
     override-build: |
       # Unset all snapcraft build variables so they don't interfere
       unset LD

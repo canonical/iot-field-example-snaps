@@ -1,0 +1,32 @@
+From 6dabfae9c5a45436ad86f144a54cf40cc3001097 Mon Sep 17 00:00:00 2001
+From: Andre Hartmann <aha_1980@gmx.de>
+Date: Mon, 8 Jul 2019 21:35:12 +0200
+Subject: [PATCH] =?UTF-8?q?SocketCAN:=20Fix=20compiler=20error=20"?=
+ =?UTF-8?q?=E2=80=98SIOCGSTAMP=E2=80=99=20was=20not=20declared"?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Fixes: QTBUG-76957
+Change-Id: I8c4c86aa23137d67f5d20eedfe1c46a241c0632b
+Reviewed-by: Alex Blasche <alexander.blasche@qt.io>
+Reviewed-by: Denis Shienkov <denis.shienkov@gmail.com>
+Signed-off-by: Isaac True <isaac.true@canonical.com>
+---
+ qtserialbus/src/plugins/canbus/socketcan/socketcanbackend.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/qtserialbus/src/plugins/canbus/socketcan/socketcanbackend.cpp b/qtserialbus/src/plugins/canbus/socketcan/socketcanbackend.cpp
+index d42ab8e..a60260f 100644
+--- a/qtserialbus/src/plugins/canbus/socketcan/socketcanbackend.cpp
++++ b/qtserialbus/src/plugins/canbus/socketcan/socketcanbackend.cpp
+@@ -42,6 +42,7 @@
+
+ #include <linux/can/error.h>
+ #include <linux/can/raw.h>
++#include <linux/sockios.h>
+ #include <errno.h>
+ #include <unistd.h>
+ #include <net/if.h>
+--
+2.34.1
