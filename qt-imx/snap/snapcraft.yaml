@@ -44,8 +44,8 @@ parts:
       chmod a+x ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
       ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin --auto-accept --force
     organize:
-      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/fb/*: usr/lib/
-      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/*.so*: usr/lib/
+      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/fb/*: usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/
+      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/*.so*: usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/
       imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/pkgconfig: usr/lib/pkgconfig
       imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/dri: usr/lib/dri
       imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/include: usr/include
@@ -57,6 +57,7 @@ parts:
     prime:
       - -usr/include
       - -usr/lib/pkgconfig
+
   dependencies:
     plugin: nil
     stage-packages:
@@ -75,7 +76,6 @@ parts:
       - libinput-dev
       - libfontconfig-dev
       - libwayland-dev
-      - libc6
       - libbsd0
       - libglvnd0
       - libdrm2
@@ -83,7 +83,6 @@ parts:
       - libcrypt1
       - libdbus-1-3
       - libffi7
-      - libgcc-s1
       - libglapi-mesa
       - libwayland-client0
       - libwayland-cursor0
@@ -95,6 +94,19 @@ parts:
       - libxext6
       - libxfixes3
       - libxdamage1
+      # Normally these shouldn't be in the snap, but Snapcraft complains about
+      # dangling symlinks
+      - libstdc++6
+      - zlib1g
+      - libexpat1
+      - libgcc-s1
+      - libc6
+      - libblkid1
+      - libpcre3
+      - libuuid1
+      - libselinux1
+      - libsepol1
+      - libmount1
     override-build: |
       snapcraftctl build
       # Move all files from /lib to /usr/lib and create a symlink
@@ -107,19 +119,18 @@ parts:
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libGL.*
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libEGL*
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libGLX*
+      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libvulkan*
       - -usr/include/EGL
       - -usr/include/GL
       - -usr/include/GLES*
       - -usr/include/KHR/khrplatform.h
     prime:
-      - -usr/include
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
       - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libdrm_*
-      - -usr/lib/*.a
-      - -usr/lib/pkgconfig
       - -usr/lib/udev
       - -usr/lib/cmake
       - -usr/share/doc
+
   qt5:
     after:
       - imx-gpu-viv
@@ -170,7 +181,8 @@ parts:
         -device ${DEVICE} ${DEVICE_OPTIONS} \
         -no-alsa -no-openssl -no-audio-backend -no-use-gold-linker \
         -extprefix ${SNAPCRAFT_PART_INSTALL}/usr \
-        -skip qtwebengine
+        -skip qtwebengine \
+        -libdir ${SNAPCRAFT_PART_INSTALL}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/
 
       make -j$(nproc)
 
@@ -178,13 +190,22 @@ parts:
     stage:
       - -lib
     prime:
-      - -usr/include
-      - -usr/lib/*.a
-      - -usr/lib/*.prl
-      - -usr/lib/pkgconfig
-      - -usr/lib/cmake
-      - -usr/mkspecs
       - -usr/doc
+
+  qt-conf:
+    after:
+      - qt5
+    plugin: nil
+    override-build: |
+      cat > ${SNAPCRAFT_PART_INSTALL}/qt.conf << EOF
+      [Paths]
+      Prefix = ../
+      Libraries = ../lib/${SNAPCRAFT_ARCH_TRIPLET}/
+      Sysroot = ../../
+      EOF
+    organize:
+      qt.conf: usr/bin/qt.conf
+
   hello-world:
     after:
       - qt5
@@ -206,26 +227,6 @@ apps:
     plugs:
       - opengl
       - hardware-observe
-      - framebuffer
-      - gpu
-  hello-world-dbg:
-    command: usr/bin/strace $SNAP/opt/hello-world/bin/hello-world
-    environment:
-      QT_PLUGIN_PATH: $SNAP/usr/plugins
-    plugs:
-      - opengl
-      - system-observe
-      - hardware-observe
-      - framebuffer
-      - gpu
-  hello-world-gdb:
-    command: usr/bin/gdb $SNAP/opt/hello-world/bin/hello-world
-    environment:
-      QT_PLUGIN_PATH: $SNAP/usr/plugins
-    plugs:
-      - opengl
-      - hardware-observe
-      - system-observe
       - framebuffer
       - gpu
 
