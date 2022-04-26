@@ -16,8 +16,8 @@ description: |
   downloaded, extracted, and added to the snap. It's assumed you know what
   you're doing, license-wise, if you're using and/or distributing this snap.
 
-grade: stable
-confinement: strict
+grade: devel
+confinement: devmode
 
 plugs:
   gpu:
