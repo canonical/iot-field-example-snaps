@@ -43,8 +43,6 @@ parts:
         -O ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
       chmod a+x ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
       ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin --auto-accept --force
-    override-build: |
-      cp -r ${SNAPCRAFT_PART_BUILD}/* ${SNAPCRAFT_PART_INSTALL}/
     organize:
       imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/fb/*: usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/
       imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/*.so*: usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/
