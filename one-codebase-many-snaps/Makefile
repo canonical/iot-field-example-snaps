@@ -1,6 +1,6 @@
 SNAPCRAFTFLAGS ?=
 
-SNAPS = $(sort $(notdir $(wildcard ./snaps/*)))
+SNAPS = $(notdir $(wildcard ./snaps/*))
 
 $(SNAPS) : force-snap
 	rm -f ./snap
