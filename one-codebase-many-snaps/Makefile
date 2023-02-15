@@ -7,9 +7,8 @@ $(SNAPS) : force-snap
 	ln -s ./snaps/$@/snap ./snap
 	snapcraft $(SNAPCRAFTFLAGS)
 
-.PHONY: clean-snap
+.PHONY: clean-snap force-snap
 clean-snap:
 	snapcraft clean $(SNAPCRAFTFLAGS)
 
-.PHONY: force-snap
 force-snap:
