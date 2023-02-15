@@ -65,4 +65,6 @@ $ make snap-a
 $ make snap-b
 
 $ make snap-a SNAPCRAFTFLAGS=--use-lxd
-``` 
+```
+
+As an alternative to `SNAPCRAFTFLAGS` the [`SNAPCRAFT_BUILD_ENVIRONMENT` environment variable](https://snapcraft.io/docs/build-options) will also be respected as normal.
