@@ -1,133 +1,151 @@
-#!/bin/bash
+#!/bin/sh
 
-LOG_SNAP_COMMON=${SNAP_COMMON}/auto-install-usb.log
+# Splitting isn't possible
+# SNAP is not misspelt
+# shellcheck disable=SC2086,SC2153
 
-# log to both SNAP_COMMON and the mounted partition
-function log(){
-  echo -e "`date -Iseconds` ${1}" >> ${LOG_SNAP_COMMON}
-  echo -e "`date -Iseconds` ${1}" >> ${LOG_MOUNTED}
+# log to SNAP_COMMON and TTY
+log() {
+    printf '%s\n'                        "$1"
+    printf '%s %s\n' "$(date -Iseconds)" "$1" >> ${SNAP_COMMON}/auto-install-usb.log
 }
 
-# log with echo to both SNAP_COMMON and the mounted partition
-function logecho(){
-  echo -e "${1}"
-  log "${1}"
+logerr() {
+    printf '%s\n' "$1"
+    printf '%s %s: %s\n' "$(date -Iseconds)" "ERROR" "$1" >> ${SNAP_COMMON}/auto-install-usb.log
 }
 
-# Outter loop ensures that the process continues after 
-# insertion of USB with inapplicable content (for example no asserts and snaps)
-# causes break on inner loop
-while true
-do
-  # create watched file just to be sure
-  [[ -n ${WATCHED} ]] && touch ${WATCHED}
+# Check if drive is mounted
+check_drive() {
 
-  while true;
-  do
-    sleep 5
-    #WATCHED is touched on automount and its content is the mount point
-    ${SNAP}/usr/bin/inotifywait -e open ${WATCHED}
+    while :; do
+        touch ${WATCHED}
+        log "Signal file is ${WATCHED}."
 
-    #MNT is the mountpoint of the USB drive
-    MNT=`cat ${WATCHED}`
+        ${SNAP}/usr/bin/inotifywait -e open ${WATCHED}
 
-    LOG_MOUNTED=${MNT}/auto-install-usb.log
+        MNT=$(cat $WATCHED)
 
-    echo -e "Mount signal file ${WATCHED} touched. Mountpoint is ${MNT}."
-    # We only start logging to *files* after the mount device is known to have
-    # at least one assert file and one snap file, our use case of interest
-    # so for now store up the mesesage to be logged to file later
-    MSG="\tMount signal file ${WATCHED} touched.\n\tMountpoint is ${MNT}.\n"
-
-    # find any *.assert files
-    ASSERTS=`ls "${MNT}" | grep assert$`
-
-    # stop if no assert files found
-    [[ -z $ASSERTS ]] && break
-
-    #log assert files found
-    for ANASSERT in ${ASSERTS}; do
-      #strip whitespace
-      ANASSERT=`echo ${ANASSERT} | sed 's/\s*$//g'`
-      echo -e "\tAssert: ${ANASSERT} found."
-      MSG="${MSG}Assert: ${ANASSERT} found."
+        if [ -z $MNT ]; then
+            sleep 10
+            check_drive
+        else
+            log "Mountpoint is ${MNT}."
+            find_assertions ${MNT}
+            exit 0
+        fi
     done
 
-    # find any *.snap files
-    SNAPS=`ls "${MNT}" | grep snap$`
+}
 
-    # stop if no snap files found
-    [[ -z $SNAPS ]] && break
+# Find any assertions on the root level of the mounted device
+find_assertions() {
+    _assertions="$(find $1 -maxdepth 1 -name '*.assert')"
+    log "Assertions found are: $_assertions"
+    ack_asserts $_assertions
+}
 
-    # We are now in a valid use case, the mount point has *.assert and *.snap
-    # so write log messages
-    log "${MSG}"
+# Acknowledge the found assertions using the snapd REST API
+ack_asserts() {
+    for _assert in "$@"; do
+        if [ ! -e "${_assert%%.assert}.snap" ]; then
+            logerr "${_assert%%.assert}.snap not found for $_assert"
+            cp ${SNAP_COMMON}/auto-install-usb.log ${MNT}
+            exit 1
+        fi
 
-    for ASNAP in ${SNAPS}; do
-      #strip whitespace
-      ASNAP=`echo ${ASNAP} | sed 's/\s*$//g'`
-      logecho "\tSnap file ${ASNAP} found."
+        # Make a datetime
+        DT=$(date -Iseconds)
+        # Create a results file to check
+        _assert_result="${SNAP_COMMON}/${_assert##*/}_result.$DT"
+        # Create a list of snaps
+        _snaps="$_snaps ${_assert%%.assert}.snap"
+        # Ack the assert
+        curl \
+            -sS \
+            -X POST \
+            -o $_assert_result \
+            --unix-socket /run/snapd.socket \
+            --data-binary "@$_assert" \
+            http://localhost/v2/assertions
+
+        if grep -Iq '"status":"OK"' $_assert_result; then
+            log "ACKNOWLEDGE RESULT: $_assert acknowledged"
+        else
+            logerr "ACKNOWLEDGE RESULT: $_assert not acknowledged"
+            cp ${SNAP_COMMON}/auto-install-usb.log ${MNT}
+            exit 1
+        fi
     done
 
-    #Make a datetime
-    DT=`date -Iseconds`
+    install_snap $_snaps
+}
 
-    for ASSERT in ${ASSERTS}; do
-      ASSERT_RES_FILE="${SNAP_COMMON}/${ASSERT}_result.${DT}"
-      # Ack the assert:
-      ${SNAP}/usr/bin/curl -o "${ASSERT_RES_FILE}" -X POST -sS --unix-socket /run/snapd.socket http://localhost/v2/assertions --data-binary "@${MNT}/${ASSERT}"
-      grep -Iq '"status":"OK"' ${ASSERT_RES_FILE}
-      if [[ "$?" == "0" ]]; then
-        logecho "Ack of ${ASSERT} succeeded"
-      else
-        logecho "ERROR: Ack of ${ASSERT} failed. This installation iteration is STOPPING."
-        FAILED=0
-      fi
+# Install the asserted snap using the snapd REST API
+install_snap() {
+    for _snap in "$@"; do
+        #Make a datetime
+        DT=$(date -Iseconds)
+        _snap_result="$SNAP_COMMON/${_snap##*/}_result.$DT"
+        # install the snap
+        curl \
+            -sS \
+            -o "${_snap_result}" \
+            --unix-socket /run/snapd.socket \
+            --form snap=@$_snap \
+            http://localhost/v2/snaps
+
+        if grep -Iq '"status":"Accepted"' $_snap_result; then
+            log "INSTALL RESULT: ${_snap##*/} installed"
+        else
+            log "INSTALL RESULT: ${_snap##*/} not installed"
+            cp ${SNAP_COMMON}/auto-install-usb.log ${MNT}
+            exit 1
+        fi
+
+        track_channel ${_snap##*/} $_snap_result
     done
+}
 
-    # ack of assertion failed, so quit
-    [[ ${FAILED} ]] && break
+# set snapd to explicitly follow stable for a snap
+track_channel() {
+    # keep trying to set the channel to stable because it may take some time if a snap change is in process
+    # give up after 14 loops, where each loop sleeps twice as long as the previous
+    # where 14 loops takes 19.1 minutes
+    _snap_name=${1%%_*}
+    _loop_count=0
+    _sleep=2
 
-    INSTALL_SUCCEEDED=0
-    for ASNAP in ${SNAPS}; do
-      CHANNEL_SUCCEEDED=0
-      SNAP_RES_FILE="${SNAP_COMMON}/${ASNAP}_result.${DT}"
-      # install the snap
-      ${SNAP}/usr/bin/curl -o "${SNAP_RES_FILE}" -sS --unix-socket /run/snapd.socket --form snap=@${MNT}/${ASNAP} http://localhost/v2/snaps
-      grep -Iq '"status":"Accepted"' ${SNAP_RES_FILE}
-      if [[ "$?" == "0" ]]; then
-        logecho "Install of ${ASNAP} succeeded"
-        # set snapd to explicitly follow stable for this snap
-        SNAPNAME=`echo ${ASNAP} | cut -f1 -d_`
-        # keep trying to set the channel to stable because it may take some time if a snap change is in process
-        # give up after 14 loops, where each loop sleeps twice as long as the previous
-        # where 14 loops takes 19.1 minutes	
-        IDX=0
-        SLEEP=2
-        CHANNEL_SUCCEEDED=1
-        while [ $IDX -lt 14 ]; do
-          sleep $SLEEP
-          ${SNAP}/usr/bin/curl -X POST -o "${SNAP_RES_FILE}.channel" --header "Content-Type: application/json"  --data '{"action":"switch","channel":"stable"}' -sS --unix-socket /run/snapd.socket http://localhost/v2/snaps/${SNAPNAME}
-          grep -Iq '"status":"Accepted"' ${SNAP_RES_FILE}.channel
-          if [[ "$?" == "0" ]]; then
-            logecho "${SNAPNAME} is now following stable"
-            CHANNEL_SUCCEEDED=0
+    while [ $_loop_count -lt 14 ]; do
+        sleep $_sleep
+        curl \
+            -sS \
+            -X POST \
+            -o "${2}.channel" \
+            --unix-socket /run/snapd.socket \
+            --header "Content-Type: application/json" \
+            --data '{"action":"switch","channel":"stable"}' \
+            http://localhost/v2/snaps/${_snap_name}
+
+        if grep -Iq '"status":"Accepted"' ${2}.channel; then
+            log "${_snap_name} is now following stable"
+            cp ${SNAP_COMMON}/auto-install-usb.log ${MNT}
             break
-          fi
-          let IDX=$IDX+1
-          let SLEEP=${SLEEP}*2
-        done
-        [[ ! ${CHANNEL_SUCCEEDED} ]] && logecho "WARNING: Unable to configure ${SNAPNAME} channel"
-      else
-        INSTALL_SUCCEEDED=1
-        logecho "Install of ${ASNAP} failed. This installation iteration is STOPPING."
-        break
-      fi
+        fi
+        _loop_count=$((_loop_count+1))
+        _sleep=$((_sleep*2))
     done
-    if [ $INSTALL_SUCCEEDED -eq 0 ]; then
-      logecho "AUTO INSTALL RESULT: All snaps installed. Ending"
-    else
-      logecho "AUTO INSTALL RESULT: Not all snaps installed. Process incomplete." 
-    fi
-  done
-done
+
+    log "WARN: failed to make $_snap_name follow stable"
+    log "WARN: Manual intervention may be required for $_snap_name to refresh"
+    cp ${SNAP_COMMON}/auto-install-usb.log ${MNT}
+}
+
+main() {
+
+    MNT=$(cat ${WATCHED})
+
+    check_drive
+}
+
+main
