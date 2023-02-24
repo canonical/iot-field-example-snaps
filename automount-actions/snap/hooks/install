@@ -1,5 +1,4 @@
 #!/bin/bash
 
-snapctl stop --disable $SNAP_INSTANCE_NAME.on-mount-do
 #WATCHED is a signal file that informs a USB drive is mounted
-touch $WATCHED
+touch ${SNAP_COMMON}/watched

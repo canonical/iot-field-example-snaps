@@ -4,7 +4,7 @@ sleep 5
 
 $SNAP/usr/local/bin/udisksctl monitor | grep --line-buffered " Device:" | while read -r -- device; do
 
-  echo "$SNAP_NAME.automount found ${device}"
+  echo "$SNAP_NAME.auto-mount found ${device}"
   if echo $device| grep -q "[0-9]$"; then
     DEV="$(echo $device | sed 's/^Device: //')"
   fi

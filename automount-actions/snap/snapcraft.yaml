@@ -5,41 +5,63 @@ summary: Automatically mount USB and take actions
 description: |
   This snap waits for USB plug events of block devices and automatically
   mounts such devices under the /media dir when inserted and then installs
-  asserted snaps found there. 
+  asserted snaps found there.
+
 grade: stable
 confinement: strict
 
-environment:
-  LD_LIBRARY_PATH: $SNAP/usr/local/lib
-  # Signal file to inform on-mount-do daemon the mount point of USB
-  WATCHED: $SNAP_COMMON/watched
- 
 apps:
   udisksd:
     command: usr/local/libexec/udisks2/udisksd
     daemon: simple
-    slots: [ service ]
+    slots:
+      - service
     plugs:
       - hardware-observe
       - mount-observe
-  automount:
-    command: bin/automount
-    daemon: simple
-    after: [ udisksd ]
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib
+      # Signal file to inform auto-install daemon the mount point of USB
+      WATCHED: $SNAP_COMMON/watched
+
   udiskctl:
     command: bin/udiskctl.sh
     plugs:
       - block-devices
       - hardware-observe
       - mount-observe
-  on-mount-do:
-    command: bin/on-mount-do
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib
+      # Signal file to inform auto-install daemon the mount point of USB
+      WATCHED: $SNAP_COMMON/watched
+
+  auto-mount:
+    command: bin/auto-mount
     daemon: simple
-    plugs: [ snapd-control ]
+    after: [ udisksd ]
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib
+      # Signal file to inform auto-install daemon the mount point of USB
+      WATCHED: $SNAP_COMMON/watched
+
+  auto-install:
+    command: bin/auto-install
+    daemon: simple
+    # Install as disabled because most interfaces are not auto-connecting
+    # You can remove this line if you enable the interfaces to auto-connect
+    install-mode: disable
+    plugs:
+      - snapd-control
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib
+      # Signal file to inform auto-install daemon the mount point of USB
+      WATCHED: $SNAP_COMMON/watched
+
 
 slots:
   service:
     interface: udisks2
+
 plugs:
   client:
     interface: udisks2
@@ -60,28 +82,37 @@ layout:
 
 parts:
   actions:
-    source: actions
+    source: scripts/
     plugin: dump
+
   debs:
     plugin: nil
-    stage-packages: [ curl, inotify-tools ] 
-  automount:
-    source: scripts
-    plugin: dump
+    stage-packages:
+      - curl
+      - inotify-tools
+
   pkgs:
     plugin: nil
-    stage-packages: [ mount, e2fsprogs ]
+    stage-packages:
+      - mount
+      - e2fsprogs
     organize:
       sbin/dumpe2fs: usr/sbin/dumpe2fs
       bin/umount: usr/bin/umount
+
   udisks:
     source: https://github.com/storaged-project/udisks.git
     source-tag: udisks-2.8.4
     plugin: autotools
+    autotools-configure-parameters:
+      - --enable-fhs-media
     override-pull: |
       snapcraftctl pull
       git apply -v $SNAPCRAFT_PROJECT_DIR/udisksd.patch
-    autotools-configure-parameters: ["--enable-fhs-media"]
+    prime:
+        - -lib/pkgconfig
+        - -lib/systemd
+        - -lib/cgmanager
     build-packages:
          - gnome-common
          - gobject-introspection
@@ -131,7 +162,3 @@ parts:
         - libblockdev-mdraid2
         - libblockdev-part2
         - libblockdev-fs2
-    prime:
-        - -lib/pkgconfig
-        - -lib/systemd
-        - -lib/cgmanager
