@@ -83,8 +83,10 @@ ack_asserts() {
 
         # Create a results file to check
         _assert_result="${SNAP_COMMON}/${_assert##*/}_result.$_date"
+
         # Create a list of snaps
         _snaps="$_snaps ${_assert%%.assert}.snap"
+
         # Ack the assert
         rest_call ack "$_assert_result" "$_assert"
 
@@ -104,6 +106,7 @@ ack_asserts() {
 install_snap() {
     for _snap in "$@"; do
         _snap_result="$SNAP_COMMON/${_snap##*/}_result.$_date"
+
         # install the snap
         rest_call install "$_snap_result" "$_snap"
 
@@ -138,6 +141,7 @@ track_channel() {
             cp -f "${SNAP_COMMON}/auto-install.log" "$_mount_point"
             break
         fi
+
         _loop_count=$((_loop_count+1))
         _sleep=$((_sleep*2))
     done
