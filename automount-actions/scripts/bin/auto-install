@@ -1,9 +1,5 @@
 #!/bin/sh
 
-# Splitting isn't possible
-# SNAP is not misspelt
-# shellcheck disable=SC2086,SC2153
-
 # log to SNAP_COMMON and TTY
 log() {
     printf '%s %s\n' \
@@ -34,7 +30,7 @@ find_assertions() {
     _mount_point="$1"
     _assertions="$(find "$_mount_point" -maxdepth 1 -name '*.assert')"
     log "Assertions found are: $_assertions"
-    ack_asserts $_assertions
+    ack_asserts "$_assertions"
 }
 
 # Acknowledge the found assertions using the snapd REST API
@@ -54,12 +50,12 @@ ack_asserts() {
         curl \
             -sS \
             -X POST \
-            -o $_assert_result \
+            -o "$_assert_result" \
             --unix-socket /run/snapd.socket \
             --data-binary "@$_assert" \
             http://localhost/v2/assertions
 
-        if grep -Iq '"status":"OK"' $_assert_result; then
+        if grep -Iq '"status":"OK"' "$_assert_result"; then
             log "ACKNOWLEDGE RESULT: $_assert acknowledged"
         else
             log "ERROR: ACKNOWLEDGE RESULT: $_assert not acknowledged"
@@ -68,7 +64,7 @@ ack_asserts() {
         fi
     done
 
-    install_snap $_snaps
+    install_snap "$_snaps"
 }
 
 # Install the asserted snap using the snapd REST API
@@ -80,10 +76,10 @@ install_snap() {
             -sS \
             -o "${_snap_result}" \
             --unix-socket /run/snapd.socket \
-            --form snap=@$_snap \
+            --form snap="@$_snap" \
             http://localhost/v2/snaps
 
-        if grep -Iq '"status":"Accepted"' $_snap_result; then
+        if grep -Iq '"status":"Accepted"' "$_snap_result"; then
             log "INSTALL RESULT: ${_snap##*/} installed"
         else
             log "ERROR: INSTALL RESULT: ${_snap##*/} not installed"
@@ -91,7 +87,7 @@ install_snap() {
             exit 1
         fi
 
-        track_channel ${_snap##*/} $_snap_result
+        track_channel "${_snap##*/}" "$_snap_result"
     done
 }
 
@@ -114,7 +110,7 @@ track_channel() {
             --unix-socket /run/snapd.socket \
             --header "Content-Type: application/json" \
             --data '{"action":"switch","channel":"stable"}' \
-            http://localhost/v2/snaps/${_snap_name}
+            "http://localhost/v2/snaps/${_snap_name}"
 
         if grep -Iq '"status":"Accepted"' "${_log_name}.channel"; then
             log "${_snap_name} is now following stable"
