@@ -6,13 +6,8 @@
 
 # log to SNAP_COMMON and TTY
 log() {
-    printf '%s\n'                        "$1"
-    printf '%s %s\n' "$(date -Iseconds)" "$1" >> ${SNAP_COMMON}/auto-install-usb.log
-}
-
-logerr() {
-    printf '%s\n' "$1"
-    printf '%s %s: %s\n' "$(date -Iseconds)" "ERROR" "$1" >> ${SNAP_COMMON}/auto-install-usb.log
+    printf '%s %s\n' \
+        "$(date -Iseconds)" "$1" | tee -a "${SNAP_COMMON}/auto-install.log"
 }
 
 # Check if drive is mounted
@@ -49,8 +44,8 @@ find_assertions() {
 ack_asserts() {
     for _assert in "$@"; do
         if [ ! -e "${_assert%%.assert}.snap" ]; then
-            logerr "${_assert%%.assert}.snap not found for $_assert"
-            cp ${SNAP_COMMON}/auto-install-usb.log ${MNT}
+            log "ERROR: ${_assert%%.assert}.snap not found for $_assert"
+            cp -f "${SNAP_COMMON}/auto-install.log" "$_mount_point"
             exit 1
         fi
 
@@ -72,8 +67,8 @@ ack_asserts() {
         if grep -Iq '"status":"OK"' $_assert_result; then
             log "ACKNOWLEDGE RESULT: $_assert acknowledged"
         else
-            logerr "ACKNOWLEDGE RESULT: $_assert not acknowledged"
-            cp ${SNAP_COMMON}/auto-install-usb.log ${MNT}
+            log "ERROR: ACKNOWLEDGE RESULT: $_assert not acknowledged"
+            cp -f "${SNAP_COMMON}/auto-install.log" "$_mount_point"
             exit 1
         fi
     done
@@ -98,8 +93,8 @@ install_snap() {
         if grep -Iq '"status":"Accepted"' $_snap_result; then
             log "INSTALL RESULT: ${_snap##*/} installed"
         else
-            log "INSTALL RESULT: ${_snap##*/} not installed"
-            cp ${SNAP_COMMON}/auto-install-usb.log ${MNT}
+            log "ERROR: INSTALL RESULT: ${_snap##*/} not installed"
+            cp -f "${SNAP_COMMON}/auto-install.log" "$_mount_point"
             exit 1
         fi
 
@@ -129,7 +124,7 @@ track_channel() {
 
         if grep -Iq '"status":"Accepted"' ${2}.channel; then
             log "${_snap_name} is now following stable"
-            cp ${SNAP_COMMON}/auto-install-usb.log ${MNT}
+            cp -f "${SNAP_COMMON}/auto-install.log" "$_mount_point"
             break
         fi
         _loop_count=$((_loop_count+1))
@@ -138,7 +133,7 @@ track_channel() {
 
     log "WARN: failed to make $_snap_name follow stable"
     log "WARN: Manual intervention may be required for $_snap_name to refresh"
-    cp ${SNAP_COMMON}/auto-install-usb.log ${MNT}
+    cp -f "${SNAP_COMMON}/auto-install.log" "$_mount_point"
 }
 
 main() {
