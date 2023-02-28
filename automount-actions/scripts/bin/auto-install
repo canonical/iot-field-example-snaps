@@ -127,6 +127,9 @@ track_channel() {
 }
 
 main() {
+    # Globally set exit on error, no unset variables
+    set -eu
+
     # Make a date time for logging
     _date=$(date -Iseconds)
 
