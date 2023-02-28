@@ -46,10 +46,8 @@ ack_asserts() {
             exit 1
         fi
 
-        # Make a datetime
-        DT=$(date -Iseconds)
         # Create a results file to check
-        _assert_result="${SNAP_COMMON}/${_assert##*/}_result.$DT"
+        _assert_result="${SNAP_COMMON}/${_assert##*/}_result.$_date"
         # Create a list of snaps
         _snaps="$_snaps ${_assert%%.assert}.snap"
         # Ack the assert
@@ -76,9 +74,7 @@ ack_asserts() {
 # Install the asserted snap using the snapd REST API
 install_snap() {
     for _snap in "$@"; do
-        #Make a datetime
-        DT=$(date -Iseconds)
-        _snap_result="$SNAP_COMMON/${_snap##*/}_result.$DT"
+        _snap_result="$SNAP_COMMON/${_snap##*/}_result.$_date"
         # install the snap
         curl \
             -sS \
@@ -134,8 +130,8 @@ track_channel() {
 }
 
 main() {
-
-    MNT=$(cat ${WATCHED})
+    # Make a date time for logging
+    _date=$(date -Iseconds)
 
     check_drive
 }
