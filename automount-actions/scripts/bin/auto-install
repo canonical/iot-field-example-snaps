@@ -14,28 +14,25 @@ log() {
 check_drive() {
 
     while :; do
-        touch ${WATCHED}
-        log "Signal file is ${WATCHED}."
+        _watch_file="$SNAP_COMMON/watched"
 
-        ${SNAP}/usr/bin/inotifywait -e open ${WATCHED}
+        log "Signal file is ${_watch_file}."
 
-        MNT=$(cat $WATCHED)
+        inotifywait -e open "$_watch_file"
 
-        if [ -z $MNT ]; then
-            sleep 10
-            check_drive
-        else
-            log "Mountpoint is ${MNT}."
-            find_assertions ${MNT}
-            exit 0
-        fi
+        read -r _mount_point < "$_watch_file"
+
+        [ -n "$_mount_point" ] || continue
     done
 
+    log "Mountpoint is ${_mount_point}."
+    find_assertions "${_mount_point}"
 }
 
 # Find any assertions on the root level of the mounted device
 find_assertions() {
-    _assertions="$(find $1 -maxdepth 1 -name '*.assert')"
+    _mount_point="$1"
+    _assertions="$(find "$_mount_point" -maxdepth 1 -name '*.assert')"
     log "Assertions found are: $_assertions"
     ack_asserts $_assertions
 }
