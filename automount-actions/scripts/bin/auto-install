@@ -101,6 +101,7 @@ track_channel() {
     # give up after 14 loops, where each loop sleeps twice as long as the previous
     # where 14 loops takes 19.1 minutes
     _snap_name=${1%%_*}
+    _log_name=$2
     _loop_count=0
     _sleep=2
 
@@ -109,13 +110,13 @@ track_channel() {
         curl \
             -sS \
             -X POST \
-            -o "${2}.channel" \
+            -o "${_log_name}.channel" \
             --unix-socket /run/snapd.socket \
             --header "Content-Type: application/json" \
             --data '{"action":"switch","channel":"stable"}' \
             http://localhost/v2/snaps/${_snap_name}
 
-        if grep -Iq '"status":"Accepted"' ${2}.channel; then
+        if grep -Iq '"status":"Accepted"' "${_log_name}.channel"; then
             log "${_snap_name} is now following stable"
             cp -f "${SNAP_COMMON}/auto-install.log" "$_mount_point"
             break
