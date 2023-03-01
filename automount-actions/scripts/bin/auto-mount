@@ -21,9 +21,6 @@ mount_devices() {
         [ -n "$_device" ] || continue
         # FIXME: Make sure the device contains a filesystem
 
-        # TODO: Rather than a watch file, we should maybe write to a FIFO,
-        #       otherwise maybe use flock to prevent races and pull one line
-        #       out of the file at a time
         automount "$_device" >> "$_watch_file"
     done
 }
@@ -38,6 +35,7 @@ main() {
     readonly _date="$(date -Iseconds)"
     readonly _log_file="$SNAP_COMMON/logs/auto-mount/auto-mount_${_date}.log"
 
+    init_watch_file
     init_log "$_log_file"
 
     watch_devices | mount_devices

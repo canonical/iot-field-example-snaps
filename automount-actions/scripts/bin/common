@@ -1,6 +1,11 @@
 #!/bin/sh
 
-readonly _watch_file="$SNAP_COMMON/watched"
+# readonly _watch_file="$SNAP_COMMON/watched"
+readonly _watch_file="/tmp/devices.fifo"
+
+init_watch_file() {
+    [ -p "$_watch_file" ] || mkfifo "$_watch_file"
+}
 
 init_log() {
     _arg_log_file="$1"

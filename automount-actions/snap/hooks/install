@@ -1,4 +1,0 @@
-#!/bin/bash
-
-#WATCHED is a signal file that informs a USB drive is mounted
-touch ${SNAP_COMMON}/watched

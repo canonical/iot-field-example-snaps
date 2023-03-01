@@ -6,16 +6,12 @@
 check_drive() {
     log "Signal file is ${_watch_file}."
 
-    while :; do
-        inotifywait -e open "$_watch_file"
+    while read -r _mount_point < "$_watch_file"; do
+        [ -z "$_mount_point" ] && continue
 
-        read -r _mount_point < "$_watch_file"
-
-        [ -n "$_mount_point" ] && break
+        log "Mountpoint is ${_mount_point}."
+        find_assertions "${_mount_point}"
     done
-
-    log "Mountpoint is ${_mount_point}."
-    find_assertions "${_mount_point}"
 }
 
 # Find any assertions on the root level of the mounted device
@@ -152,6 +148,7 @@ main() {
     readonly _date=$(date -Iseconds)
     readonly _log_file="$SNAP_COMMON/logs/auto-install/auto-install_${_date}.log"
 
+    init_watch_file
     init_log "$_log_file"
 
     check_drive
