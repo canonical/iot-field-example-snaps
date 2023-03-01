@@ -1,0 +1,18 @@
+#!/bin/sh
+
+readonly _watch_file="$SNAP_COMMON/watched"
+
+init_log() {
+    _arg_log_file="$1"
+    _arg_log_dir="$(dirname "$_arg_log_file")"
+
+    [ -d "$_arg_log_dir" ] || mkdir -p "$_arg_log_dir"
+
+    touch "$_arg_log_file"
+}
+
+# log to SNAP_COMMON and TTY
+log() {
+    printf '%s %s\n' \
+        "$(date -Iseconds)" "$1" | tee -a "${_log_file}"
+}

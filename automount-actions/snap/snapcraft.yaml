@@ -20,9 +20,7 @@ apps:
       - hardware-observe
       - mount-observe
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/local/lib
-      # Signal file to inform auto-install daemon the mount point of USB
-      WATCHED: $SNAP_COMMON/watched
+      LD_LIBRARY_PATH: $SNAP/usr/lib
 
   udiskctl:
     command: bin/udiskctl.sh
@@ -31,18 +29,14 @@ apps:
       - hardware-observe
       - mount-observe
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/local/lib
-      # Signal file to inform auto-install daemon the mount point of USB
-      WATCHED: $SNAP_COMMON/watched
+      LD_LIBRARY_PATH: $SNAP/usr/lib
 
   auto-mount:
     command: bin/auto-mount
     daemon: simple
     after: [ udisksd ]
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/local/lib
-      # Signal file to inform auto-install daemon the mount point of USB
-      WATCHED: $SNAP_COMMON/watched
+      LD_LIBRARY_PATH: $SNAP/usr/lib
 
   auto-install:
     command: bin/auto-install
@@ -53,10 +47,7 @@ apps:
     plugs:
       - snapd-control
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/local/lib
-      # Signal file to inform auto-install daemon the mount point of USB
-      WATCHED: $SNAP_COMMON/watched
-
+      LD_LIBRARY_PATH: $SNAP/usr/lib
 
 slots:
   service:

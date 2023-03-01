@@ -1,19 +1,12 @@
 #!/bin/sh
 
-# log to SNAP_COMMON and TTY
-log() {
-    printf '%s %s\n' \
-        "$(date -Iseconds)" "$1" | tee -a "${SNAP_COMMON}/auto-install.log"
-}
+. "$SNAP/bin/common"
 
 # Check if drive is mounted
 check_drive() {
+    log "Signal file is ${_watch_file}."
 
     while :; do
-        _watch_file="$SNAP_COMMON/watched"
-
-        log "Signal file is ${_watch_file}."
-
         inotifywait -e open "$_watch_file"
 
         read -r _mount_point < "$_watch_file"
@@ -77,7 +70,7 @@ ack_asserts() {
     for _assert in "$@"; do
         if [ ! -e "${_assert%%.assert}.snap" ]; then
             log "ERROR: ${_assert%%.assert}.snap not found for $_assert"
-            cp -f "${SNAP_COMMON}/auto-install.log" "$_mount_point"
+            cp -f "$_log_file" "$_mount_point"
             exit 1
         fi
 
@@ -94,7 +87,7 @@ ack_asserts() {
             log "ACKNOWLEDGE RESULT: $_assert acknowledged"
         else
             log "ERROR: ACKNOWLEDGE RESULT: $_assert not acknowledged"
-            cp -f "${SNAP_COMMON}/auto-install.log" "$_mount_point"
+            cp -f "$_log_file" "$_mount_point"
             exit 1
         fi
     done
@@ -114,7 +107,7 @@ install_snap() {
             log "INSTALL RESULT: ${_snap##*/} installed"
         else
             log "ERROR: INSTALL RESULT: ${_snap##*/} not installed"
-            cp -f "${SNAP_COMMON}/auto-install.log" "$_mount_point"
+            cp -f "$_log_file" "$_mount_point"
             exit 1
         fi
 
@@ -138,7 +131,7 @@ track_channel() {
 
         if grep -Iq '"status":"Accepted"' "${_log_name}.channel"; then
             log "${_snap_name} is now following stable"
-            cp -f "${SNAP_COMMON}/auto-install.log" "$_mount_point"
+            cp -f "$_log_file" "$_mount_point"
             break
         fi
 
@@ -148,7 +141,7 @@ track_channel() {
 
     log "WARN: failed to make $_snap_name follow stable"
     log "WARN: Manual intervention may be required for $_snap_name to refresh"
-    cp -f "${SNAP_COMMON}/auto-install.log" "$_mount_point"
+    cp -f "$_log_file" "$_mount_point"
 }
 
 main() {
@@ -156,7 +149,10 @@ main() {
     set -eu
 
     # Make a date time for logging
-    _date=$(date -Iseconds)
+    readonly _date=$(date -Iseconds)
+    readonly _log_file="$SNAP_COMMON/logs/auto-install/auto-install_${_date}.log"
+
+    init_log "$_log_file"
 
     check_drive
 }
