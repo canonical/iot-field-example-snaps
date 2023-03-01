@@ -18,7 +18,7 @@ check_drive() {
 
         read -r _mount_point < "$_watch_file"
 
-        [ -n "$_mount_point" ] || continue
+        [ -n "$_mount_point" ] && break
     done
 
     log "Mountpoint is ${_mount_point}."
