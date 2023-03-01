@@ -145,7 +145,7 @@ main() {
     set -eu
 
     # Make a date time for logging
-    readonly _date=$(date -Iseconds)
+    _date=$(date -Iseconds); readonly _date
     readonly _log_file="$SNAP_COMMON/logs/auto-install/auto-install_${_date}.log"
 
     init_watch_file

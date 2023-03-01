@@ -32,7 +32,7 @@ main() {
     sleep 5
 
     # TODO: Should there be a $_log_dir env var in /bin/common?
-    readonly _date="$(date -Iseconds)"
+    _date=$(date -Iseconds); readonly _date
     readonly _log_file="$SNAP_COMMON/logs/auto-mount/auto-mount_${_date}.log"
 
     init_watch_file
