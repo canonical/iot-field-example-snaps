@@ -16,9 +16,10 @@ automount() {
 mount_devices() {
     while read -r -- _device; do
 
+        [ -b "$_device" ] || continue
+
         log "$SNAP_NAME.auto-mount found ${_device}"
 
-        [ -n "$_device" ] || continue
         # FIXME: Make sure the device contains a filesystem
 
         automount "$_device" >> "$_watch_file"
