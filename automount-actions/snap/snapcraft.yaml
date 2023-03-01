@@ -12,7 +12,7 @@ confinement: strict
 
 apps:
   udisksd:
-    command: usr/local/libexec/udisks2/udisksd
+    command: usr/libexec/udisks2/udisksd
     daemon: simple
     slots:
       - service
@@ -64,8 +64,8 @@ layout:
     bind: $SNAP_DATA/var/lib/udisks2
   /etc/libblockdev/conf.d:
     bind: $SNAP/etc/libblockdev/conf.d
-  /usr/local/etc/udisks2:
-    bind: $SNAP/usr/local/etc/udisks2
+  /usr/etc/udisks2:
+    bind: $SNAP/usr/etc/udisks2
   /etc/crypttab:
     bind-file: $SNAP/etc/crypttab
   /usr/sbin/dumpe2fs:
@@ -96,6 +96,7 @@ parts:
     source-tag: udisks-2.8.4
     plugin: autotools
     autotools-configure-parameters:
+      - --prefix=/usr
       - --enable-fhs-media
     override-pull: |
       snapcraftctl pull
