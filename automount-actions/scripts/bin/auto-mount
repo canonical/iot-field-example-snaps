@@ -1,17 +1,46 @@
-#! /bin/sh
+#!/bin/sh
 
-sleep 5
+. "$SNAP/bin/common"
 
-$SNAP/usr/local/bin/udisksctl monitor | grep --line-buffered " Device:" | while read -r -- device; do
+watch_devices() {
+    udisksctl monitor | awk -W interactive '/ Device:/ {print $2}'
+}
 
-  echo "$SNAP_NAME.auto-mount found ${device}"
-  if echo $device| grep -q "[0-9]$"; then
-    DEV="$(echo $device | sed 's/^Device: //')"
-  fi
-  if [ -n "$DEV" ]; then
-    RES=`$SNAP/usr/local/bin/udisksctl mount --no-user-interaction --block-device "$DEV"`
-    # process returned value into the mount point string
-    RES2=`echo $RES | cut -f4 -d\  | cut -f1 -d.`
-    echo $RES2 > $WATCHED
-  fi
-done
+automount() {
+    _arg_device="$1"
+
+    udisksctl mount --no-user-interaction --block-device "$_arg_device" | \
+        cut -f4 -d' '
+}
+
+mount_devices() {
+    while read -r -- _device; do
+
+        log "$SNAP_NAME.auto-mount found ${_device}"
+
+        [ -n "$_device" ] || continue
+        # FIXME: Make sure the device contains a filesystem
+
+        # TODO: Rather than a watch file, we should maybe write to a FIFO,
+        #       otherwise maybe use flock to prevent races and pull one line
+        #       out of the file at a time
+        automount "$_device" >> "$_watch_file"
+    done
+}
+
+main() {
+    set -eu
+
+    # TODO: why?
+    sleep 5
+
+    # TODO: Should there be a $_log_dir env var in /bin/common?
+    readonly _date="$(date -Iseconds)"
+    readonly _log_file="$SNAP_COMMON/logs/auto-mount/auto-mount_${_date}.log"
+
+    init_log "$_log_file"
+
+    watch_devices | mount_devices
+}
+
+main
