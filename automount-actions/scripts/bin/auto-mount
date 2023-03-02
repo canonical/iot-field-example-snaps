@@ -2,44 +2,51 @@
 
 . "$SNAP/bin/common"
 
+init_mount_dir() {
+    _arg_dir="$1"
+
+}
+
 watch_devices() {
-    udisksctl monitor | awk -W interactive '/ Device:/ {print $2}'
+    inotifywait --quiet --monitor --event "moved_to" --event "delete" /dev/disk/by-uuid | \
+        while read -r _parent _action _uuid; do
+            case "$_action" in
+                MOVED_TO) try_mount "$_parent" "$_uuid" ;;
+                DELETE)   rm_mount  "$_uuid" ;;
+            esac
+        done
 }
 
-automount() {
-    _arg_device="$1"
+try_mount() {
+    _arg_parent="${1%/}"
+    _arg_uuid="$2"
 
-    udisksctl mount --no-user-interaction --block-device "$_arg_device" | \
-        cut -f4 -d' '
-}
+    _source="${_arg_parent}/${_arg_uuid}"
+    _target="${_mount_dir}/${_arg_uuid}"
 
-mount_devices() {
-    while read -r -- _device; do
+    log "$SNAP_NAME.auto-mount found: ${_source}"
 
-        [ -b "$_device" ] || continue
+    if ! mount "${_source}" "${_target}" >/dev/null 2>&1; then
+        log "WARN: Could not mount ${_source} to ${_target}"
+        return
+    fi
 
-        log "$SNAP_NAME.auto-mount found ${_device}"
-
-        # FIXME: Make sure the device contains a filesystem
-
-        automount "$_device" >> "$_watch_file"
-    done
+    echo "${_target}" >> "${_watch_file}"
 }
 
 main() {
     set -eu
 
-    # TODO: why?
-    sleep 5
-
     # TODO: Should there be a $_log_dir env var in /bin/common?
     _date=$(date -Iseconds); readonly _date
     readonly _log_file="$SNAP_COMMON/logs/auto-mount/auto-mount_${_date}.log"
+    readonly _mount_dir="/media/automount"
 
-    init_watch_file
     init_log "$_log_file"
+    init_watch_file
+    init_mount_dir "$_mount_dir"
 
-    watch_devices | mount_devices
+    watch_devices
 }
 
 main
