@@ -1,5 +1,7 @@
 # qt-imx-snap
 
+***Notice**: This is an example and should not be used in production.*
+
 ## Overview
 
 Qt application libraries compiled with support for the eglfs backend on i.MX 6 & 8 SoCs.
