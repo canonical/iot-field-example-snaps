@@ -4,7 +4,7 @@
 
 ## Overview
 
-Qt application libraries compiled with support for the eglfs backend on i.MX 6 & 8 SoCs.
+Qt application libraries compiled with support for the eglfs backend on i.MX 6 & 8 SoCs for use on Ubuntu Core 20.
 
 Users can either use this snap in `stage-snaps` to utilise the prebuilt libraries for their application, or extend this snap by adding the appropriate build steps.
 
