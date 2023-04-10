@@ -1,0 +1,36 @@
+#!/bin/sh -eu
+
+_unit_tests=""
+
+add_test() {
+    _unit_tests="${_unit_tests}:$1"
+}
+
+
+main() {
+
+    readonly OK="OK"
+    readonly FAIL="FAIL"
+
+    # Source test functions
+    for _script in "$(dirname "$0")"/tests/*_test.sh; do
+        echo
+        echo "$_script":
+        (
+            # shellcheck disable=1090
+            . "$_script"
+
+            IFS=:
+            for _test in ${_unit_tests#:}; do
+                $_test \
+                    && _res="$OK" \
+                    || _res="$FAIL"
+
+                printf "%-31s%4s\n" "$_test" "$_res" | tr ' ' .
+            done
+        )
+    done
+
+}
+
+main
