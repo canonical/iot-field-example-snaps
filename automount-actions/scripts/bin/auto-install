@@ -25,9 +25,8 @@ find_assertions() {
 # Submit some call to the snapd REST API
 rest_call() {
     _action="$1"
-    _result="$2"
-    _file="$3"
-    _snap_name=${3%%_*}
+    _file="$2"
+    _snap_name=${2%%_*}
     _socket=/run/snapd.socket
 
     case "$_action" in
@@ -35,7 +34,6 @@ rest_call() {
             curl \
                 -sS \
                 -X POST \
-                -o "$_result" \
                 --data-binary "@$_file" \
                 --unix-socket="$_socket" \
                 http://localhost/v2/assertions
@@ -43,7 +41,7 @@ rest_call() {
         install)
             curl \
                 -sS \
-                -o "$_result" \
+                -X POST \
                 --form snap="@$_file" \
                 --unix-socket="$_socket" \
                 http://localhost/v2/snaps
@@ -52,7 +50,6 @@ rest_call() {
             curl \
                 -sS \
                 -X POST \
-                -o "$_result" \
                 --unix-socket="$_socket" \
                 --header "Content-Type: application/json" \
                 --data '{"action":"switch","channel":"stable"}' \
@@ -70,16 +67,13 @@ ack_asserts() {
             exit 1
         fi
 
-        # Create a results file to check
-        _assert_result="${SNAP_COMMON}/${_assert##*/}_result.$_date"
-
         # Create a list of snaps
         _snaps="$_snaps ${_assert%%.assert}.snap"
 
         # Ack the assert
-        rest_call ack "$_assert_result" "$_assert"
+        _response="$(rest_call ack "$_assert")"
 
-        if grep -Iq '"status":"OK"' "$_assert_result"; then
+        if echo "$_response" | grep -Iq '"status":"OK"'; then
             log "ACKNOWLEDGE RESULT: $_assert acknowledged"
         else
             log "ERROR: ACKNOWLEDGE RESULT: $_assert not acknowledged"
@@ -97,9 +91,9 @@ install_snap() {
         _snap_result="$SNAP_COMMON/${_snap##*/}_result.$_date"
 
         # install the snap
-        rest_call install "$_snap_result" "$_snap"
+        _response="$(rest_call install "$_snap")"
 
-        if grep -Iq '"status":"Accepted"' "$_snap_result"; then
+        if echo "$_response" | grep -Iq '"status":"Accepted"'; then
             log "INSTALL RESULT: ${_snap##*/} installed"
         else
             log "ERROR: INSTALL RESULT: ${_snap##*/} not installed"
@@ -123,9 +117,9 @@ track_channel() {
 
     while [ $_loop_count -lt 14 ]; do
         sleep $_sleep
-        rest_call track "$_log_name" "$_snap_name"
+        _response="$(rest_call track "$_snap_name")"
 
-        if grep -Iq '"status":"Accepted"' "${_log_name}.channel"; then
+        if echo "$_response" | grep -Iq '"status":"Accepted"'; then
             log "${_snap_name} is now following stable"
             cp -f "$_log_file" "$_mount_point"
             break
