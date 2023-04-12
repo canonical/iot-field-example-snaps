@@ -10,14 +10,28 @@ find_assertions_test() {
 
     readonly _log_file="${_testdata}/log"
 
-    for _i in $(seq 5); do
-        echo -n >> "${_testdata}/${_i}.assert"
-        echo -n >> "${_testdata}/${_i}.snap"
-    done
+    _files="1:2:3:hello world"
 
-    ack_asserts() echo "$*"
+    (
+        IFS=:
+        for _file in $_files; do
+            echo -n >> "${_testdata}/${_file}.assert"
+            echo -n >> "${_testdata}/${_file}.snap"
+        done
+    )
+
+    # Override the ack_asserts() call in find_assertions
+    ack_asserts() {
+        while [ "$#" -ne 0 ]; do
+            echo "$1"
+            shift
+        done
+    }
+
+    _asserts="$(echo "$_files" | sed 's/:/.assert\n/g').assert"
 
     assert_eq \
-        "$(find_assertions "$_testdata" | xargs basename -a | tr '\n' ' ')" \
-        "1.assert 2.assert 3.assert 4.assert 5.assert "
+        "$(find_assertions "$_testdata" | xargs -IARG basename "ARG")" \
+        "$_asserts"
+
 }
