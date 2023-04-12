@@ -1,0 +1,18 @@
+#!/bin/sh
+
+readonly SNAP="${PROJECT_ROOT}/scripts"
+
+enable_testdata() {
+    readonly _testdata="${TMP}/${_test_set}/${_test}"
+    mkdir -p "$_testdata"
+}
+
+enable_snap_common() {
+    readonly SNAP_COMMON="${_testdata}/common"
+    mkdir "$SNAP_COMMON"
+}
+
+enable_snap_data() {
+    readonly SNAP_DATA="${_testdata}/data"
+    mkdir "$SNAP_DATA"
+}

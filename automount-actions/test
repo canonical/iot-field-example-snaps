@@ -1,36 +1,76 @@
 #!/bin/sh -eu
 
-_unit_tests=""
-
 add_test() {
     _unit_tests="${_unit_tests}:$1"
 }
 
+dirname() {
+    _dir="${1%/}"
+    _dir="${_dir%/*}"
+
+    echo "${_dir:-/}"
+}
+
+assert_eq() {
+    [ "$1" = "$2" ] || {
+        echo "'$1' != '$2'"
+        return 1
+    }
+}
+
+assert_neq() {
+    [ "$1" = "$2" ] || {
+        echo "'$1' == '$2'"
+        return 1
+    }
+}
 
 main() {
+
+    PROJECT_ROOT="$(dirname "$0")"; readonly PROJECT_ROOT
+    : ${TESTDIR:="${PROJECT_ROOT}/tests"}; readonly TESTDIR
+    : ${TMP:="$(mktemp -d)"}; readonly TMP
+
+    readonly NOEXEC=1
 
     readonly OK="OK"
     readonly FAIL="FAIL"
 
-    # Source test functions
-    for _script in "$(dirname "$0")"/tests/*_test.sh; do
+    : ${DEBUG:=""}
+
+    echo "TMP: '$TMP'"
+    for _script in "$PROJECT_ROOT"/tests/*_test.sh; do
+
+        _test_set="${_script#"${PROJECT_ROOT}/tests/"}"
+        _test_set="${_test_set%_test.sh}"
+
         echo
-        echo "$_script":
+        echo "$_test_set":
         (
+            _unit_tests=""
+
             # shellcheck disable=1090
             . "$_script"
 
             IFS=:
             for _test in ${_unit_tests#:}; do
-                $_test \
-                    && _res="$OK" \
-                    || _res="$FAIL"
+                (
+                    unset IFS
 
-                printf "%-31s%4s\n" "$_test" "$_res" | tr ' ' .
+                    _err="$("$_test" 2>&1)" \
+                        && _result="$OK" \
+                        || _result="$FAIL"
+
+                    # Print whether the test succeeded or not
+                    printf "%-31s%4s\n" "$_test" "$_result" | tr ' ' .
+
+                    # Print error messages if DEBUG is set
+                    [ -z "$DEBUG" ] || [ "$_result" = "$OK" ] || [ -z "$_err" ] || \
+                        printf "%s\n\n" "$_err" >&2
+                )
             done
         )
     done
-
 }
 
 main

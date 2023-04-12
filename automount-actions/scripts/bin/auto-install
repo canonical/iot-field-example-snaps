@@ -148,4 +148,4 @@ main() {
     check_drive
 }
 
-main
+[ -n "$NOEXEC" ] || main
