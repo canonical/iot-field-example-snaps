@@ -16,10 +16,10 @@ check_drive() {
 
 # Find any assertions on the root level of the mounted device
 find_assertions() {
-    _mount_point="$1"
-    _assertions="$(find "$_mount_point" -maxdepth 1 -name '*.assert')"
-    log "Assertions found are: $_assertions"
-    ack_asserts "$_assertions"
+    _dir="$1"
+
+    log "Assertions found are:" "$_dir"/*.assert
+    ack_asserts "$_dir"/*.assert
 }
 
 # Submit some call to the snapd REST API

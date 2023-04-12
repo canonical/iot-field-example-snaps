@@ -19,5 +19,5 @@ init_log() {
 # log to SNAP_COMMON and TTY
 log() {
     printf '%s %s\n' \
-        "$(date -Iseconds)" "$1" | tee -a "${_log_file}"
+        "$(date -Iseconds)" "$*" | tee -a "${_log_file}" >&2
 }
