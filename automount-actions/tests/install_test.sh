@@ -33,5 +33,4 @@ find_assertions_test() {
     assert_eq \
         "$(find_assertions "$_testdata" | xargs -IARG basename "ARG")" \
         "$_asserts"
-
 }
