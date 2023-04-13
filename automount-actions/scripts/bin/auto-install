@@ -71,11 +71,9 @@ install_snap() {
 
 # set snapd to explicitly follow stable for a snap
 track_stable() {
-    # FIXME:
-    # keep trying to set the channel to stable because it may take some
-    # if a snap change is in proces give up after 14 loops, where
-    # each loop sleeps twice as long as the previou where 14 loops
-    # takes 19.1 minute
+    # Keep trying to set the channel to stable because it may take some
+    #   time if a snap change is in progress. Quadratically back off each loop,
+    #   and quit after 9 loops, for a sum total of ~17 minutes.
 
     _snap_name="$1"
 
