@@ -1,10 +1,13 @@
 #!/bin/sh
 
-# readonly _watch_file="$SNAP_COMMON/watched"
-readonly _watch_file="/tmp/devices.fifo"
+: ${WATCH_FILE:=/tmp/mounts.fifo}; readonly WATCH_FILE
 
-init_watch_file() {
-    [ -p "$_watch_file" ] || mkfifo "$_watch_file"
+mklog() {
+    _log_dir="${1:-"${LOG_DIR:="$(mktemp -d)"}"}"
+
+    [ -d "$_log_dir" ] || mkdir -p "$_log_dir"
+
+    echo "${_log_dir}/$(date -Iseconds).log"
 }
 
 init_log() {

@@ -2,32 +2,13 @@
 
 . "$SNAP/bin/common"
 
-# Check if drive is mounted
-check_drive() {
-    log "Signal file is ${_watch_file}."
-
-    while read -r _mount_point < "$_watch_file"; do
-        [ -z "$_mount_point" ] && continue
-
-        log "Mountpoint is ${_mount_point}."
-        find_assertions "${_mount_point}"
-    done
-}
-
-# Find any assertions on the root level of the mounted device
-find_assertions() {
-    _dir="$1"
-
-    log "Assertions found are:" "$_dir"/*.assert
-    ack_asserts "$_dir"/*.assert
-}
-
 # Submit some call to the snapd REST API
 rest_call() {
     _action="$1"
     _file="$2"
-    _snap_name=${2%%_*}
-    _socket=/run/snapd.socket
+
+    _snap_name="$(basename "${2%%_*}")"
+    _socket="${SNAPD_SOCKET:-/run/snapd.socket}"
 
     case "$_action" in
         ack)
@@ -59,93 +40,112 @@ rest_call() {
 }
 
 # Acknowledge the found assertions using the snapd REST API
-ack_asserts() {
-    for _assert in "$@"; do
-        if [ ! -e "${_assert%%.assert}.snap" ]; then
-            log "ERROR: ${_assert%%.assert}.snap not found for $_assert"
-            cp -f "$_log_file" "$_mount_point"
-            exit 1
-        fi
+ack_assert() {
+    _assert="$1"
 
-        # Create a list of snaps
-        _snaps="$_snaps ${_assert%%.assert}.snap"
+    # Ack the assert
+    _response="$(rest_call ack "$_assert")"
 
-        # Ack the assert
-        _response="$(rest_call ack "$_assert")"
+    if ! echo "$_response" | grep -Iq '"status":"OK"'; then
+        log "ERROR: ACKNOWLEDGE RESULT: $_assert not acknowledged"
+        return 1
+    fi
 
-        if echo "$_response" | grep -Iq '"status":"OK"'; then
-            log "ACKNOWLEDGE RESULT: $_assert acknowledged"
-        else
-            log "ERROR: ACKNOWLEDGE RESULT: $_assert not acknowledged"
-            cp -f "$_log_file" "$_mount_point"
-            exit 1
-        fi
-    done
-
-    install_snap "$_snaps"
+    log "ACKNOWLEDGE RESULT: $_assert acknowledged"
 }
 
 # Install the asserted snap using the snapd REST API
 install_snap() {
-    for _snap in "$@"; do
-        _snap_result="$SNAP_COMMON/${_snap##*/}_result.$_date"
+    _snap="$1"
 
-        # install the snap
-        _response="$(rest_call install "$_snap")"
+    # install the snap
+    _response="$(rest_call install "$_snap")"
 
-        if echo "$_response" | grep -Iq '"status":"Accepted"'; then
-            log "INSTALL RESULT: ${_snap##*/} installed"
-        else
-            log "ERROR: INSTALL RESULT: ${_snap##*/} not installed"
-            cp -f "$_log_file" "$_mount_point"
-            exit 1
-        fi
+    if ! echo "$_response" | grep -Iq '"status":"Accepted"'; then
+        log "ERROR: INSTALL RESULT: ${_snap##*/} not installed"
+        return 1
+    fi
 
-        track_channel "${_snap##*/}" "$_snap_result"
-    done
+    log "INSTALL RESULT: ${_snap##*/} installed"
 }
 
 # set snapd to explicitly follow stable for a snap
-track_channel() {
-    # keep trying to set the channel to stable because it may take some time if a snap change is in process
-    # give up after 14 loops, where each loop sleeps twice as long as the previous
-    # where 14 loops takes 19.1 minutes
-    _snap_name=${1%%_*}
-    _log_name=$2
+track_stable() {
+    # FIXME:
+    # keep trying to set the channel to stable because it may take some
+    # if a snap change is in proces give up after 14 loops, where
+    # each loop sleeps twice as long as the previou where 14 loops
+    # takes 19.1 minute
+
+    _snap_name="$1"
+
     _loop_count=0
     _sleep=2
 
-    while [ $_loop_count -lt 14 ]; do
-        sleep $_sleep
+    while
         _response="$(rest_call track "$_snap_name")"
 
         if echo "$_response" | grep -Iq '"status":"Accepted"'; then
             log "${_snap_name} is now following stable"
-            cp -f "$_log_file" "$_mount_point"
-            break
+            return
         fi
 
-        _loop_count=$((_loop_count+1))
-        _sleep=$((_sleep*2))
+        [ $_loop_count -lt 9 ]
+    do
+        sleep $_sleep
+
+        : $(( _loop_count += 1 ))
+        : $(( _sleep      *= 2 ))
     done
 
     log "WARN: failed to make $_snap_name follow stable"
     log "WARN: Manual intervention may be required for $_snap_name to refresh"
-    cp -f "$_log_file" "$_mount_point"
+    return 1
+}
+
+process_mounts() {
+    _watch_file="$1"
+
+    while read -r _mount_point < "$_watch_file"; do
+
+        # Make sure the mount actually exists
+        [ -d "$_mount_point" ] || continue
+
+        # Skip mounts that don't contain any asserts
+        ls "$_mount_point"/* >/dev/null 2>&1 || continue
+
+        _log_file="$(mklog)"
+
+        # Loop through each assert and, for those with a corresponding snap, install
+        log "Mountpoint is ${_mount_point}."
+        for _assert in "$_mount_point"/*.assert; do
+
+            # Make sure a corresponding snap exists
+            [ -e "${_assert%%.assert}.snap" ] || {
+                log "WARN: ${_assert%%.assert}.snap not found for $_assert"
+                continue
+            }
+
+            ack_assert "$_assert" \
+                && install_snap "${_assert%.assert}.snap" \
+                && track_stable "$(basename "${_assert%_*}")" \
+                || continue
+        done
+
+        # Copy log file over
+        cp -f "$_log_file" "$_mount_point"
+
+        # TODO: Handle drive unmounting
+    done
 }
 
 main() {
     # Globally set exit on error, no unset variables
     set -eu
 
-    # Make a date time for logging
-    _date=$(date -Iseconds); readonly _date
-    readonly _log_file="$SNAP_COMMON/logs/auto-install/auto-install_${_date}.log"
+    [ -p "$WATCH_FILE" ] || mkfifo "$WATCH_FILE"
 
-    init_watch_file
-    init_log "$_log_file"
-
-    check_drive
+    process_mounts "$WATCH_FILE"
 }
 
 [ -n "$NOEXEC" ] || main
