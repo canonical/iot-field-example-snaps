@@ -46,4 +46,4 @@ main() {
     watch_devices
 }
 
-[ -z "$NOEXEC" ] || main
+[ -n "$NOEXEC" ] || main
