@@ -10,15 +10,6 @@ mklog() {
     echo "${_log_dir}/$(date -Iseconds).log"
 }
 
-init_log() {
-    _arg_log_file="$1"
-    _arg_log_dir="$(dirname "$_arg_log_file")"
-
-    [ -d "$_arg_log_dir" ] || mkdir -p "$_arg_log_dir"
-
-    touch "$_arg_log_file"
-}
-
 # log to SNAP_COMMON and TTY
 log() {
     printf '%s %s\n' \

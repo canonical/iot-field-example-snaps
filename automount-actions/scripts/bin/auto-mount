@@ -2,11 +2,6 @@
 
 . "$SNAP/bin/common"
 
-init_mount_dir() {
-    _arg_dir="$1"
-
-}
-
 watch_devices() {
     inotifywait --quiet --monitor --event "moved_to" --event "delete" /dev/disk/by-uuid | \
         while read -r _parent _action _uuid; do
@@ -37,14 +32,10 @@ try_mount() {
 main() {
     set -eu
 
-    # TODO: Should there be a $_log_dir env var in /bin/common?
-    _date=$(date -Iseconds); readonly _date
-    readonly _log_file="$SNAP_COMMON/logs/auto-mount/auto-mount_${_date}.log"
-    readonly _mount_dir="/media/automount"
+    readonly _log_file="$(mklog "${SNAP_COMMON}/logs")"
+    readonly _mount_dir="${MOUNT_DIR:-"$(mktemp -d)"}"
 
-    init_log "$_log_file"
     init_watch_file
-    init_mount_dir "$_mount_dir"
 
     watch_devices
 }
