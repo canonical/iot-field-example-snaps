@@ -8,34 +8,40 @@ watch_devices() {
             case "$_action" in
                 MOVED_TO) try_mount "$_parent" "$_uuid" ;;
                 DELETE)   rm_mount  "$_uuid" ;;
+                *) : ;;
             esac
         done
 }
 
 try_mount() {
-    _arg_parent="${1%/}"
-    _arg_uuid="$2"
+    _parent="${1%/}"
+    _uuid="$2"
 
-    _source="${_arg_parent}/${_arg_uuid}"
-    _target="${_mount_dir}/${_arg_uuid}"
+    _source="${_parent}/${_uuid}"
+    _target="${_mount_dir}/${_uuid}"
 
     log "$SNAP_NAME.auto-mount found: ${_source}"
 
-    if ! mount "${_source}" "${_target}" >/dev/null 2>&1; then
+    if ! mount "$_source" "$_target" >/dev/null 2>&1; then
         log "WARN: Could not mount ${_source} to ${_target}"
         return
     fi
 
-    echo "${_target}" >> "${_watch_file}"
+    echo "$_target" >> "$WATCH_FILE"
+}
+
+rm_mount() {
+    # TODO
+    :
 }
 
 main() {
     set -eu
 
-    readonly _log_file="$(mklog "${SNAP_COMMON}/logs")"
+    _log_file="$(mklog "${SNAP_COMMON}/logs")"; readonly _log_file
     readonly _mount_dir="${MOUNT_DIR:-"$(mktemp -d)"}"
 
-    init_watch_file
+    [ -p "$WATCH_FILE" ] || mkfifo "$WATCH_FILE"
 
     watch_devices
 }
