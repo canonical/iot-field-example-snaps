@@ -16,7 +16,7 @@ rest_call() {
                 -sS \
                 -X POST \
                 --data-binary "@$_file" \
-                --unix-socket="$_socket" \
+                --unix-socket "$_socket" \
                 http://localhost/v2/assertions
         ;;
         install)
@@ -24,14 +24,14 @@ rest_call() {
                 -sS \
                 -X POST \
                 --form snap="@$_file" \
-                --unix-socket="$_socket" \
+                --unix-socket "$_socket" \
                 http://localhost/v2/snaps
         ;;
         track)
             curl \
                 -sS \
                 -X POST \
-                --unix-socket="$_socket" \
+                --unix-socket "$_socket" \
                 --header "Content-Type: application/json" \
                 --data '{"action":"switch","channel":"stable"}' \
                 "http://localhost/v2/snaps/${_snap_name}"
