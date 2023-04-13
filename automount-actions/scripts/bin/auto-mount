@@ -22,6 +22,7 @@ try_mount() {
 
     log "$SNAP_NAME.auto-mount found: ${_source}"
 
+    mkdir -p "$_target"
     if ! mount "$_source" "$_target" >/dev/null 2>&1; then
         log "WARN: Could not mount ${_source} to ${_target}"
         return
