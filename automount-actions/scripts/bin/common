@@ -3,11 +3,14 @@
 : ${WATCH_FILE:=/tmp/mounts.fifo}; readonly WATCH_FILE
 
 mklog() {
+    # FIXME: if mklog() is called within a subshell,
+    #        then LOG_DIR isn't getting globally updated
     _log_dir="${1:-"${LOG_DIR:="$(mktemp -d)"}"}"
 
     [ -d "$_log_dir" ] || mkdir -p "$_log_dir"
 
-    echo "${_log_dir}/$(date -Iseconds).log"
+    _log_path="${_log_dir}/$(date -Iseconds).log"
+    : >| "$_log_path" && echo "$_log_path"
 }
 
 # log to SNAP_COMMON and TTY
