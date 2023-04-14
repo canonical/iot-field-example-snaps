@@ -4,13 +4,6 @@ add_test() {
     _unit_tests="${_unit_tests}:$1"
 }
 
-dirname() {
-    _dir="${1%/}"
-    _dir="${_dir%/*}"
-
-    echo "${_dir:-/}"
-}
-
 assert_eq() {
     [ "$1" = "$2" ] || {
         echo "'$1' != '$2'" >&2
