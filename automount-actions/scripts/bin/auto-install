@@ -101,6 +101,15 @@ track_stable() {
     return 1
 }
 
+eject_device() {
+    # Try to copy log file over
+    cp -f "$_log_file" "$_mount_point" || true
+
+    sync
+    umount "$_mount_point"
+    eject "/dev/disk/by-uuid/$(basename "$_mount_point")"
+}
+
 process_mounts() {
     _watch_file="$1"
 
@@ -109,10 +118,14 @@ process_mounts() {
         # Make sure the mount actually exists
         [ -d "$_mount_point" ] || continue
 
-        # Skip mounts that don't contain any asserts
-        ls "$_mount_point"/*.assert >/dev/null 2>&1 || continue
-
         _log_file="$(mklog)"
+
+        # Skip mounts that don't contain any asserts
+        ls "$_mount_point"/*.assert >/dev/null 2>&1 || {
+            log "WARN: No assertions found."
+            eject_device
+            continue
+        }
 
         # Loop through each assert and, for those with a corresponding snap, install
         log "Mountpoint is ${_mount_point}."
@@ -130,10 +143,7 @@ process_mounts() {
                 || continue
         done
 
-        # Copy log file over
-        cp -f "$_log_file" "$_mount_point"
-
-        # TODO: Handle drive unmounting
+        eject_device
     done
 }
 
