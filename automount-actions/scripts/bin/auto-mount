@@ -7,7 +7,7 @@ watch_devices() {
         while read -r _parent _action _uuid; do
             case "$_action" in
                 MOVED_TO) try_mount "$_parent" "$_uuid" ;;
-                DELETE)   rm_mount  "$_uuid" ;;
+                DELETE)   rm -r "${_mount_dir}/${_uuid}" ;;
                 *) : ;;
             esac
         done
@@ -29,11 +29,6 @@ try_mount() {
     fi
 
     echo "$_target" >> "$WATCH_FILE"
-}
-
-rm_mount() {
-    # TODO
-    :
 }
 
 main() {
