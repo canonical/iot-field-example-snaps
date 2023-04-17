@@ -2,6 +2,19 @@
 
 . "$SNAP/bin/common"
 
+wait_for_fifo() {
+    [ ! -p "$WATCH_FILE" ] || return
+
+    _fifo="$(basename "$WATCH_FILE")"
+    while :; do
+        inotifywait --quiet --csv --event create "$(dirname "$WATCH_FILE")" | {
+            IFS=, read -r _dir _ _name
+
+            [ "$_name" != "$_fifo" ] || return
+        }
+    done
+}
+
 # Submit some call to the snapd REST API
 rest_call() {
     _action="$1"
@@ -151,8 +164,7 @@ main() {
     # Globally set exit on error, no unset variables
     set -eu
 
-    [ -p "$WATCH_FILE" ] || mkfifo "$WATCH_FILE"
-
+    wait_for_fifo
     process_mounts "$WATCH_FILE"
 }
 
