@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# This file will exist at runtime
+# shellcheck disable=1091
 . "$SNAP/bin/common"
 
 watch_devices() {
@@ -7,7 +9,7 @@ watch_devices() {
         while read -r _parent _action _uuid; do
             case "$_action" in
                 MOVED_TO) try_mount "$_parent" "$_uuid" ;;
-                DELETE)   rm -r "${_mount_dir}/${_uuid}" ;;
+                DELETE)   rm -r "${_mount_dir:?}/${_uuid}" ;;
                 *) : ;;
             esac
         done

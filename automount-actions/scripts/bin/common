@@ -1,6 +1,6 @@
 #!/bin/sh
 
-: ${WATCH_FILE:=/tmp/mounts.fifo}; readonly WATCH_FILE
+: "${WATCH_FILE:=/tmp/mounts.fifo}"; readonly WATCH_FILE
 
 mklog() {
     # FIXME: if mklog() is called within a subshell,
@@ -14,6 +14,8 @@ mklog() {
 }
 
 # log to SNAP_COMMON and TTY
+# _log_file is created by auto-install and will exist
+# shellcheck disable=2154
 log() {
     printf '%s %s\n' \
         "$(date -Iseconds)" "$*" | tee -a "${_log_file}" >&2
