@@ -135,17 +135,18 @@ process_mounts() {
 
         _log_file="$(mklog)"
 
+        log "Mountpoint is ${_mount_point}."
+
         # Skip mounts that don't contain any asserts
-        ls "$_mount_point"/*.assert >/dev/null 2>&1 || {
+        _asserts=$(find "$_mount_point" -name \*.assert)
+        [ -n "$_asserts" ] || {
             log "WARN: No assertions found."
             eject_device
             continue
         }
 
         # Loop through each assert and, for those with a corresponding snap, install
-        log "Mountpoint is ${_mount_point}."
-        for _assert in "$_mount_point"/*.assert; do
-
+        for _assert in $_asserts; do
             # Make sure a corresponding snap exists
             [ -e "${_assert%%.assert}.snap" ] || {
                 log "WARN: ${_assert%%.assert}.snap not found for $_assert"
