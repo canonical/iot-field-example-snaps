@@ -2,7 +2,7 @@
 
 # This file will exist at runtime
 # shellcheck disable=1091
-. "$SNAP/bin/common"
+. "$SNAP/usr/bin/common"
 
 watch_devices() {
     inotifywait --quiet --monitor --event "moved_to" --event "delete" /dev/disk/by-uuid | \

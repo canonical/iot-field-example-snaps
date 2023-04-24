@@ -2,7 +2,7 @@
 
 # This file will exist at runtime
 # shellcheck disable=1091
-. "$SNAP/bin/common"
+. "$SNAP/usr/bin/common"
 
 wait_for_fifo() {
     [ ! -p "$WATCH_FILE" ] || return 0

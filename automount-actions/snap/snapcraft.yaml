@@ -10,147 +10,45 @@ description: |
 grade: stable
 confinement: strict
 
+# The daemons are installed as disabled because the snapd-control and
+# mount-control interfaces are not auto-connecting. They can be installed as
+# enabled if interface auto-connection is enabled either in the Store UI or in
+# the gadget snap.
 apps:
-  udisksd:
-    command: usr/libexec/udisks2/udisksd
-    daemon: simple
-    slots:
-      - service
-    plugs:
-      - hardware-observe
-      - mount-observe
-    environment:
-      LD_LIBRARY_PATH: $SNAP/usr/lib
-
-  udiskctl:
-    command: bin/udiskctl.sh
-    plugs:
-      - block-devices
-      - hardware-observe
-      - mount-observe
-    environment:
-      LD_LIBRARY_PATH: $SNAP/usr/lib
-
   auto-mount:
-    command: bin/auto-mount
+    command: usr/bin/auto-mount
     daemon: simple
-    after: [ udisksd ]
-    environment:
-      LD_LIBRARY_PATH: $SNAP/usr/lib
+    install-mode: disable
+    plugs: [mntctl]
 
   auto-install:
-    command: bin/auto-install
+    command: usr/bin/auto-install
     daemon: simple
-    # Install as disabled because most interfaces are not auto-connecting
-    # You can remove this line if you enable the interfaces to auto-connect
     install-mode: disable
-    plugs:
-      - snapd-control
-    environment:
-      LD_LIBRARY_PATH: $SNAP/usr/lib
+    plugs: [snapd-control]
 
-slots:
-  service:
-    interface: udisks2
-
+# Add extra mount rules for different devices e.g. SD cards
+# Filesystem types and options can be restricted as needed.
+# For a full list of accepted filesystem types and mount options, see:
+# https://snapcraft.io/docs/mount-control-interface
 plugs:
-  client:
-    interface: udisks2
-  removable-media:
-    interface: removable-media
-
-layout:
-  /var/lib/udisks2:
-    bind: $SNAP_DATA/var/lib/udisks2
-  /etc/libblockdev/conf.d:
-    bind: $SNAP/etc/libblockdev/conf.d
-  /usr/etc/udisks2:
-    bind: $SNAP/usr/etc/udisks2
-  /etc/crypttab:
-    bind-file: $SNAP/etc/crypttab
-  /usr/sbin/dumpe2fs:
-    bind-file: $SNAP/usr/sbin/dumpe2fs
+  mntctl:
+    interface: mount-control
+    mount:
+    - what: /dev/sd*
+      where: /tmp/**
+      type: [ext2, ext3, ext4, vfat]
+      options: [rw, sync]
 
 parts:
   actions:
     source: scripts/
     plugin: dump
-
-  debs:
-    plugin: nil
     stage-packages:
       - curl
-      - inotify-tools
-
-  pkgs:
-    plugin: nil
-    stage-packages:
-      - mount
       - e2fsprogs
+      - inotify-tools
+      - mount
     organize:
-      sbin/dumpe2fs: usr/sbin/dumpe2fs
-      bin/umount: usr/bin/umount
-
-  udisks:
-    source: https://github.com/storaged-project/udisks.git
-    source-tag: udisks-2.8.4
-    plugin: autotools
-    autotools-configure-parameters:
-      - --prefix=/usr
-      - --enable-fhs-media
-    override-pull: |
-      snapcraftctl pull
-      git apply -v $SNAPCRAFT_PROJECT_DIR/udisksd.patch
-    prime:
-        - -lib/pkgconfig
-        - -lib/systemd
-        - -lib/cgmanager
-    build-packages:
-         - gnome-common
-         - gobject-introspection
-         - gtk-doc-tools
-         - intltool
-         - libacl1-dev
-         - libatasmart-dev
-         - libblockdev-btrfs-dev
-         - libblockdev-crypto-dev
-         - libblockdev-dev
-         - libblockdev-dm-dev
-         - libblockdev-fs-dev
-         - libblockdev-kbd-dev
-         - libblockdev-loop-dev
-         - libblockdev-lvm-dbus-dev
-         - libblockdev-lvm-dev
-         - libblockdev-mdraid-dev
-         - libblockdev-mpath-dev
-         - libblockdev-part-dev
-         - libblockdev-part-err-dev
-         - libblockdev-swap-dev
-         - libblockdev-utils-dev
-         - libgirepository1.0-dev
-         - libglib2.0-dev
-         - libgudev-1.0-dev
-         - libmount-dev
-         - libpolkit-agent-1-dev
-         - libpolkit-gobject-1-dev
-         - libsystemd-dev
-         - pkg-config
-         - udev
-         - xsltproc
-    stage-packages:
-        - libacl1
-        - libatasmart4
-        - libglib2.0-0
-        - libgudev-1.0-0
-        - libpam-systemd
-        - libpolkit-agent-1-0
-        - libpolkit-gobject-1-0
-        - parted
-        - libmount1
-        - libblockdev2
-        - libblockdev-swap2
-        - libblockdev-loop2
-        - libblockdev-crypto2
-        - libblockdev-mdraid2
-        - libblockdev-part2
-        - libblockdev-fs2
+      bin:  usr/bin
+      sbin: usr/bin
