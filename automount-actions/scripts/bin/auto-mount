@@ -38,7 +38,7 @@ main() {
     set -eu
 
     _log_file="$(mklog "${SNAP_COMMON}/logs")"; readonly _log_file
-    readonly _mount_dir="${MOUNT_DIR:-"$(mktemp -d)"}"
+    _mount_dir="${MOUNT_DIR:-"$(mktemp -d)"}";  readonly _mount_dir
 
     [ -p "$WATCH_FILE" ] || mkfifo "$WATCH_FILE"
 
