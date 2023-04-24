@@ -5,14 +5,14 @@
 . "$SNAP/bin/common"
 
 wait_for_fifo() {
-    [ ! -p "$WATCH_FILE" ] || return
+    [ ! -p "$WATCH_FILE" ] || return 0
 
     _fifo="$(basename "$WATCH_FILE")"
     while :; do
         inotifywait --quiet --csv --event create "$(dirname "$WATCH_FILE")" | {
             IFS=, read -r _dir _ _name
 
-            [ "$_name" != "$_fifo" ] || return
+            [ "$_name" != "$_fifo" ] || return 0
         }
     done
 }
@@ -100,7 +100,7 @@ track_stable() {
 
         if echo "$_response" | grep -Iq '"status":"Accepted"'; then
             log "${_snap_name} is now following stable"
-            return
+            return 0
         fi
 
         [ $_loop_count -lt 9 ]
