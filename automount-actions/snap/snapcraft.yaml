@@ -1,6 +1,6 @@
 name: automount-actions
-base: core20
-version: '0.2'
+base: core22
+version: '1.0'
 summary: Automatically mount USB and take actions
 description: |
   This snap waits for USB plug events of block devices and automatically
