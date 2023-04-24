@@ -27,6 +27,7 @@ try_mount() {
     mkdir -p "$_target"
     if ! mount "$_source" "$_target" >/dev/null 2>&1; then
         log "WARN: Could not mount ${_source} to ${_target}"
+        rm -rf "$_target"
         return 0
     fi
 
