@@ -46,7 +46,7 @@ parts:
     plugin: dump
     stage-packages:
       - curl
-      - e2fsprogs
+      - eject
       - inotify-tools
       - mount
     organize:
