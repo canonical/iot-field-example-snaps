@@ -25,7 +25,7 @@ apps:
     command: usr/bin/auto-install
     daemon: simple
     install-mode: disable
-    plugs: [snapd-control]
+    plugs: [mntctl,snapd-control]
 
 # Add extra mount rules for different devices e.g. SD cards
 # Filesystem types and options can be restricted as needed.
