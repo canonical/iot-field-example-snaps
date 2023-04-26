@@ -4,12 +4,21 @@
 # shellcheck disable=1091
 . "$SNAP/usr/bin/common"
 
+wait_for_fifo() {
+    [ ! -p "$WATCH_FILE" ] || return 0
+
+    inotifywait --quiet --csv --event create "$(dirname "$WATCH_FILE")" | \
+        while IFS=, read -r _dir _ _name; do
+            [ "${_dir}/${_name}" != "$WATCH_FILE" ] || return 0
+        done
+}
+
 watch_devices() {
     inotifywait --quiet --monitor --event "moved_to" --event "delete" /dev/disk/by-uuid | \
         while read -r _parent _action _uuid; do
             case "$_action" in
                 MOVED_TO) try_mount "$_parent" "$_uuid" ;;
-                DELETE)   rm -r "${_mount_dir:?}/${_uuid}" ;;
+                DELETE)   rm -r "${_mount_dir:?}/${_uuid}" || true ;;
                 *) : ;;
             esac
         done

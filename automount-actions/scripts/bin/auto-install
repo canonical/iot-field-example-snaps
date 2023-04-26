@@ -107,9 +107,17 @@ eject_device() {
     # Try to copy log file over
     cp -f "$_log_file" "$_mount_point" || true
 
+    # Remove the temp directory
+    rm -r "$(dirname "$_log_file")"
+
     sync
     umount "$_mount_point"
-    eject "/dev/disk/by-uuid/$(basename "$_mount_point")"
+    rmdir "$_mount_point"
+
+    # FIXME
+    # Currently the snap doesn't have the requisite AppArmor permissions
+    # This will fail if any other partitions are mounted, which is what we want
+    # eject "/dev/disk/by-uuid/$(basename "$_mount_point")" || true
 }
 
 process_mounts() {
