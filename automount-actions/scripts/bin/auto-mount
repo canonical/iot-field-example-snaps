@@ -31,7 +31,31 @@ try_mount() {
         return 0
     fi
 
+    wait_for_fifo
     echo "$_target" >> "$WATCH_FILE"
+}
+
+cleanup () {
+    sync
+
+    _uuids="$(ls -1 "$_mount_dir" | tr '\n' :)"
+
+    if [ -n "$_uuids" ]; then
+        # Unmount everthing
+        IFS=:
+        for _uuid in $_uuids; do
+            umount "${_mount_dir}/${_uuid}" || continue
+
+            rmdir "${_mount_dir}/${_uuid}"
+
+            # FIXME: See the note in auto-install's eject_device()
+            # eject "/dev/disk/by-uuid/${_uuid}" || true
+        done
+    fi
+
+    rmdir "$_mount_dir"
+
+    exit
 }
 
 main() {
@@ -40,7 +64,7 @@ main() {
     _log_file="$(mklog "${SNAP_COMMON}/logs")"; readonly _log_file
     _mount_dir="${MOUNT_DIR:-"$(mktemp -d)"}";  readonly _mount_dir
 
-    [ -p "$WATCH_FILE" ] || mkfifo "$WATCH_FILE"
+    trap cleanup EXIT INT TERM
 
     watch_devices
 }
