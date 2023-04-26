@@ -42,26 +42,27 @@ try_mount() {
 }
 
 cleanup () {
+    _exit_status=$?
+
+    [ -z "${CLEANUP_HAS_RUN:-}" ] || return 0
+    CLEANUP_HAS_RUN=1
+
     sync
 
     _uuids="$(ls -1 "$MOUNT_DIR" | tr '\n' :)"
-
     if [ -n "$_uuids" ]; then
         # Unmount everthing
         IFS=:
         for _uuid in $_uuids; do
             umount "${MOUNT_DIR}/${_uuid}" || continue
-
             rmdir "${MOUNT_DIR}/${_uuid}"
-
-            # FIXME: See the note in auto-install's eject_device()
-            # eject "/dev/disk/by-uuid/${_uuid}" || true
         done
     fi
 
     rmdir "$MOUNT_DIR"
 
-    exit
+    # Exit with 0 if we're interrupted with INT or TERM
+    case $_exit_status in 130|143) exit 0; esac
 }
 
 main() {
