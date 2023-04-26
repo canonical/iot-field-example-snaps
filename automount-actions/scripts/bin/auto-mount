@@ -1,12 +1,9 @@
 #!/bin/sh
 
-# This file will exist at runtime
-# shellcheck disable=1091
-. "$SNAP/usr/bin/common"
-
 wait_for_fifo() {
     [ ! -p "$WATCH_FILE" ] || return 0
 
+    echo "Waiting for FIFO: ${WATCH_FILE}"
     inotifywait --quiet --csv --event create "$(dirname "$WATCH_FILE")" | \
         while IFS=, read -r _dir _ _name; do
             [ "${_dir}/${_name}" != "$WATCH_FILE" ] || return 0
@@ -29,13 +26,13 @@ try_mount() {
     _uuid="$2"
 
     _source="${_parent}/${_uuid}"
-    _target="${_mount_dir}/${_uuid}"
+    _target="${MOUNT_DIR}/${_uuid}"
 
-    log "$SNAP_NAME.auto-mount found: ${_source}"
+    echo "${SNAP_NAME}.auto-mount found: ${_source}"
 
     mkdir -p "$_target"
     if ! mount -o rw,sync -t "${FSTYPE:-vfat}" "$_source" "$_target" >/dev/null 2>&1; then
-        log "WARN: Could not mount ${_source} to ${_target}"
+        echo "WARN: Could not mount ${_source} to ${_target}"
         rm -rf "$_target"
         return 0
     fi
@@ -47,22 +44,22 @@ try_mount() {
 cleanup () {
     sync
 
-    _uuids="$(ls -1 "$_mount_dir" | tr '\n' :)"
+    _uuids="$(ls -1 "$MOUNT_DIR" | tr '\n' :)"
 
     if [ -n "$_uuids" ]; then
         # Unmount everthing
         IFS=:
         for _uuid in $_uuids; do
-            umount "${_mount_dir}/${_uuid}" || continue
+            umount "${MOUNT_DIR}/${_uuid}" || continue
 
-            rmdir "${_mount_dir}/${_uuid}"
+            rmdir "${MOUNT_DIR}/${_uuid}"
 
             # FIXME: See the note in auto-install's eject_device()
             # eject "/dev/disk/by-uuid/${_uuid}" || true
         done
     fi
 
-    rmdir "$_mount_dir"
+    rmdir "$MOUNT_DIR"
 
     exit
 }
@@ -70,8 +67,8 @@ cleanup () {
 main() {
     set -eu
 
-    _log_file="$(mklog "${SNAP_COMMON}/logs")"; readonly _log_file
-    _mount_dir="${MOUNT_DIR:-"$(mktemp -d)"}";  readonly _mount_dir
+    : "${WATCH_FILE:=/tmp/mounts.fifo}"; readonly WATCH_FILE
+    : "${MOUNT_DIR:="$(mktemp -d)"}";    readonly MOUNT_DIR
 
     trap cleanup EXIT INT TERM
 

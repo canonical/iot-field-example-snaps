@@ -1,8 +1,23 @@
 #!/bin/sh
 
-# This file will exist at runtime
-# shellcheck disable=1091
-. "$SNAP/usr/bin/common"
+mklog() {
+    # FIXME: if mklog() is called within a subshell,
+    #        then LOG_DIR isn't getting globally updated
+    _log_dir="${1:-"${LOG_DIR:="$(mktemp -d)"}"}"
+
+    [ -d "$_log_dir" ] || mkdir -p "$_log_dir"
+
+    _log_path="${_log_dir}/$(date -Iseconds).log"
+    : >| "$_log_path" && echo "$_log_path"
+}
+
+# log to SNAP_COMMON and TTY
+# _log_file is created by auto-install and will exist
+# shellcheck disable=2154
+log() {
+    printf '%s %s\n' \
+        "$(date -Iseconds)" "$*" | tee -a "${_log_file}" >&2
+}
 
 # Submit some call to the snapd REST API
 rest_call() {
@@ -177,7 +192,9 @@ main() {
     # Globally set exit on error, no unset variables
     set -eu
 
+    : "${WATCH_FILE:=/tmp/mounts.fifo}"; readonly WATCH_FILE
     [ -p "$WATCH_FILE" ] || mkfifo "$WATCH_FILE"
+
     trap cleanup EXIT INT TERM
 
     process_mounts "$WATCH_FILE"
