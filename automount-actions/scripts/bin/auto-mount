@@ -27,6 +27,9 @@ try_mount() {
     _source="${_parent}/${_uuid}"
     _target="${MOUNT_DIR}/${_uuid}"
 
+    : "${OPTIONS:=rw,sync}"
+    : "${FSTYPE:=vfat}"
+
     echo "${SNAP_NAME}.auto-mount found: ${_source}"
 
     ! grep -q "$_target" /proc/mounts || {
@@ -35,7 +38,7 @@ try_mount() {
     }
 
     mkdir -p "$_target"
-    if ! mount -o rw,sync -t "${FSTYPE:-vfat}" "$_source" "$_target"; then
+    if ! mount -o "$OPTIONS" -t "$FSTYPE" "$_source" "$_target"; then
         echo "WARN: Could not mount ${_source} to ${_target}"
         rmdir -p "$_target"
         return 0
