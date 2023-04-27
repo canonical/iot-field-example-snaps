@@ -30,11 +30,13 @@ try_mount() {
     echo "${SNAP_NAME}.auto-mount found: ${_source}"
 
     mkdir -p "$_target"
-    if ! mount -o rw,sync -t "${FSTYPE:-vfat}" "$_source" "$_target" >/dev/null 2>&1; then
-        echo "WARN: Could not mount ${_source} to ${_target}"
-        rm -rf "$_target"
-        return 0
-    fi
+    grep -q "$_target" /proc/mounts || {
+        if ! mount -o rw,sync -t "${FSTYPE:-vfat}" "$_source" "$_target" >/dev/null 2>&1; then
+            echo "WARN: Could not mount ${_source} to ${_target}"
+            rm -rf "$_target"
+            return 0
+        fi
+    }
 
     wait_for_fifo
     echo "$_target" >> "$WATCH_FILE"
