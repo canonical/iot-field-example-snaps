@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# mklog ensures that a log file exists
 mklog() {
     # FIXME: if mklog() is called within a subshell,
     #        then LOG_DIR isn't getting globally updated
@@ -7,6 +8,7 @@ mklog() {
 
     [ -d "$_log_dir" ] || mkdir -p "$_log_dir"
 
+    # TODO: _log_path points to a .log file. This variable seems misnamed
     _log_path="${_log_dir}/$(date -Iseconds).log"
     : >| "$_log_path" && echo "$_log_path"
 }
@@ -19,7 +21,9 @@ log() {
         "$(date -Iseconds)" "$*" | tee -a "${_log_file}" >&2
 }
 
-# Submit some call to the snapd REST API
+# rest_call submits either an acknowledge, install, or channel track request to
+# the snapd socket. For more information on valid endpoints, see:
+# https://snapcraft.io/docs/snapd-api
 rest_call() {
     _action="$1"
     _file="$2"
@@ -56,9 +60,17 @@ rest_call() {
     esac
 }
 
-# Acknowledge the found assertions using the snapd REST API
+# ack_assert acknowledges an assertion file
+# ack_assert does not verify if the assertion type is of a valid kind
 ack_assert() {
     _assert="$1"
+
+    # TODO: check that the provided assertion meets the minimum requirements to
+    # be a valid assertion accompanying a snap. It is expected that a valid
+    # assertion file has an account-key, snap-declaration, and snap-revision
+    # https://ubuntu.com/core/docs/reference/assertions/account-key
+    # https://ubuntu.com/core/docs/reference/assertions/snap-declaration
+    # https://ubuntu.com/core/docs/reference/assertions/snap-revision
 
     # Ack the assert
     _response="$(rest_call ack "$_assert")"
@@ -71,9 +83,19 @@ ack_assert() {
     log "ACKNOWLEDGE RESULT: $_assert acknowledged"
 }
 
-# Install the asserted snap using the snapd REST API
+# install_snap installs a snap file
+# install_snap does not verify if the snap file is of a valid kind
 install_snap() {
     _snap="$1"
+
+    # TODO: check that the provided snap meets the minimum requirements to be a
+    # valid snap file. There is no magic number associated with either a
+    # SquashFS or a snap, and the low-hanging fruit for verification are
+    # relatively weak. For instance, we can verify that the size of the file
+    # matches the size listed in the corresponding assertion
+    # Theoretically there is no harm that can be done if the snap file is
+    # invalid; snapd will ensure it matches the corresponding assertion and if
+    # it doesn't, won't install it
 
     # install the snap
     _response="$(rest_call install "$_snap")"
@@ -86,11 +108,12 @@ install_snap() {
     log "INSTALL RESULT: ${_snap##*/} installed"
 }
 
-# set snapd to explicitly follow stable for a snap
+# track_stable sets the upstream tracking channel for a snap
+# track_stable can optionally fail and will require manual intervention
 track_stable() {
     # Keep trying to set the channel to stable because it may take some
     #   time if a snap change is in progress. Quadratically back off each loop,
-    #   and quit after 9 loops, for a sum total of ~17 minutes.
+    #   and quit after 9 loops, for a sum total of ~17 minutes
 
     _snap_name="$1"
 
@@ -118,6 +141,7 @@ track_stable() {
     return 1
 }
 
+# eject_device handles device ejection and cleaning
 eject_device() {
     # Try to copy log file over
     cp -f "$_log_file" "$_mount_point" || true
@@ -130,6 +154,10 @@ eject_device() {
     rmdir "$_mount_point"
 }
 
+# process_mounts verifies that for each assertion on a disk there is a
+# correspondingly named snap file in the same directory. It acknowledges the
+# assertion, installs the snap, and attempts to set that snap to track
+# latest/stable
 process_mounts() {
     _watch_file="$1"
 
@@ -138,6 +166,11 @@ process_mounts() {
         # Make sure the mount actually exists
         [ -d "$_mount_point" ] || continue
 
+        # TODO: investigate how to further extend or scope mklog()
+        # For instance, instead of spawning a subshell we could do:
+        #   mklog $_log_file
+        #   :> $_log_file; readonly $_log_file
+        #shellcheck disable=2119
         _log_file="$(mklog)"
 
         log "Mountpoint is ${_mount_point}."
@@ -159,7 +192,7 @@ process_mounts() {
             }
 
             # We want to continue in cases where ack_assert and install_snap
-            # succeed, but track_stable fails. track_stable is optional.
+            # succeed, but track_stable fails. track_stable is optional
             # shellcheck disable=2015
             ack_assert "$_assert" \
                 && install_snap "${_assert%.assert}.snap" \
@@ -171,6 +204,7 @@ process_mounts() {
     done
 }
 
+# cleanup acts to make sure this daemon stays tidy
 cleanup() {
     _exit_status=$?
 
@@ -183,6 +217,7 @@ cleanup() {
     case $_exit_status in 130|143) exit 0; esac
 }
 
+# main ensures our fifo exists before we proceed to operating on a disk
 main() {
     # Globally set exit on error, no unset variables
     set -eu
