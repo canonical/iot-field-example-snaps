@@ -11,7 +11,7 @@ wait_for_fifo() {
 }
 
 watch_devices() {
-    inotifywait --quiet --monitor --event "moved_to" --event "delete" /dev/disk/by-uuid | \
+    inotifywait --quiet --monitor --event "moved_to" /dev/disk/by-uuid | \
         while read -r _parent _action _uuid; do
             case "$_action" in
                 MOVED_TO) try_mount "$_parent" "$_uuid" ;;
@@ -35,9 +35,9 @@ try_mount() {
     }
 
     mkdir -p "$_target"
-    if ! mount -o rw,sync -t "${FSTYPE:-vfat}" "$_source" "$_target" >/dev/null 2>&1; then
+    if ! mount -o rw,sync -t "${FSTYPE:-vfat}" "$_source" "$_target"; then
         echo "WARN: Could not mount ${_source} to ${_target}"
-        rm -rf "$_target"
+        rmdir -p "$_target"
         return 0
     fi
 
@@ -54,14 +54,14 @@ cleanup () {
     sync
 
     _uuids="$(ls -1 "$MOUNT_DIR" | tr '\n' :)"
-    if [ -n "$_uuids" ]; then
+    [ -z "$_uuids" ] || {
         # Unmount everthing
         IFS=:
         for _uuid in $_uuids; do
             umount "${MOUNT_DIR}/${_uuid}" || continue
             rmdir "${MOUNT_DIR}/${_uuid}"
         done
-    fi
+    }
 
     rmdir "$MOUNT_DIR"
 
