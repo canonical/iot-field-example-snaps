@@ -20,12 +20,23 @@ apps:
     daemon: simple
     install-mode: disable
     plugs: [mntctl]
+    # Some environment variables can be modified
+    #environment:
+    #  FSTYPE: vfat
+    #  MOUNT_DIR: /tmp/tmp.XXXXXXXXXX
+    #  OPTIONS: rw,sync
+    #  WATCH_FILE: /tmp/mounts.fifo
 
   auto-install:
     command: usr/bin/auto-install
     daemon: simple
     install-mode: disable
     plugs: [mntctl,snapd-control]
+    # Some environment variables can be modified
+    #environment:
+    #  LOG_DIR: /tmp/tmp.XXXXXXXXXX
+    #  SNAPD_SOCKET: /run/snapd.socket
+    #  WATCH_FILE: /tmp/mounts.fifo
 
 # Add extra mount rules for different devices e.g. SD cards
 # Filesystem types and options can be restricted as needed.
