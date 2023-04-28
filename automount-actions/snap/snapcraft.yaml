@@ -3,9 +3,9 @@ base: core22
 version: '1.0'
 summary: Automatically mount USB and take actions
 description: |
-  This snap waits for USB plug events of block devices and automatically
-  mounts such devices under the /media dir when inserted and then installs
-  asserted snaps found there.
+  This snap waits for USB plug events of block devices and automatically mounts
+  such devices under the snap's tmpdir when inserted and then acknowledges the
+  assertions and their corresponding snaps on the partitions of that block device.
 
 grade: stable
 confinement: strict
