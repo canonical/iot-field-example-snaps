@@ -1,0 +1,51 @@
+name: Snap Builds CI
+
+# This workflow is intended to test that each snap provided as an example can be
+# built with some relevant version of snapcraft, with the aim of hopefully
+# catching bugs or regressions.
+
+# Run the jobs on:
+#   1) 12PM UTC on the 15th of each month
+on:
+  schedule:
+    - cron: '0 12 15 * *'
+  workflow_dispatch:
+
+# The following jobs are the actual jobs to be run
+# Convention:
+#   build_{directory}:
+#     name: Build job for {directory} snap
+#     runs-on: ubuntu-{target}
+#     outputs:
+#       snap-file: ${{ steps.build-snap.outputs.snap }}
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v3
+#       - name: Test build of {directory} snap
+#         uses: snapcore/action-build@v1
+#         with:
+#           path: {directory}/
+#           build-info: true
+#           snapcraft-channel: {track}/{risk}/{branch}
+#         id: build-snap
+#       run: |
+#         # At least test that the snap can be installed
+#         sudo snap install --dangerous ${{ steps.build-snap.outputs.snap }}
+jobs:
+  build_automount_actions:
+    name: Build job for automount-actions snap
+    runs-on: ubuntu-22.04
+    outputs:
+      snap-file: ${{ steps.build-snap.outputs.snap }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Test build of automount-actions snap
+        uses: snapcore/action-build@v1
+        with:
+          path: automount-actions/
+          build-info: true
+          snapcraft-channel: 7.x/edge
+        id: build-snap
+      - run: |
+          sudo snap install --dangerous ${{ steps.build-snap.outputs.snap }}

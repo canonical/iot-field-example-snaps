@@ -1,0 +1,87 @@
+name: Snap build test and Quality CI
+
+# This workflow is intended to run the various tests and linters for each
+# example snap to hopefully ensure consistency in our pushes and PRs.
+
+# Run the jobs when we:
+#   1) push to any branch
+#   2) create a PR against any branch
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  # The following jobs are checks to determine which actual jobs should run
+  # Convention:
+  #   check_{directory}
+  #     name: Check {changes} on {directory}
+  #     runs-on: ubuntu-{target}
+  #     outputs:
+  #       run_job: ${{ steps.{step_name}.outputs.run_job }}
+  #     steps:
+  #       - name: Checkout
+  #         uses: actions/checkout@v3
+  #       - name: Check {changes}
+  #         id: {step_name}
+  #         run: |
+  #           The checks to be run. Should at some point set $GITHUB_OUTPUT to
+  #           whatever check condition is required to run the actual job
+  check_automount_actions:
+    name: Check changes on automount-actions/
+    runs-on: ubuntu-22.04
+    outputs:
+      run_job: ${{ steps.check_files.outputs.run_job }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - name: Check changed files
+        id: check_files
+        run: |
+          # Generate a list of modified files
+          git diff --name-only HEAD^ HEAD > files.txt
+
+          # If any of those files were in automount-actions/, run the
+          # automount-actions jobs.
+          while IFS= read -r file; do
+            [ -e "$file" ] || {
+              echo run_job=false > "$GITHUB_OUTPUT"
+              break
+            }
+            echo run_job=true > "$GITHUB_OUTPUT"
+          done < files.txt
+
+  # The following jobs are the actual jobs to be run
+  # Convention:
+  #   {action}_{directory}:
+  #     name: {action} job for {directory} snap
+  #     runs-on: ubuntu-{target}
+  #     needs: check_{directory}
+  #     if: needs.check_{directory}.outputs.run_job == 'true'
+  #     steps:
+  #       - name: Checkout
+  #         uses: actions/checkout@v3
+  #       - name: Tests for {directory} snap
+  #         run: |
+  #           The relevant tests for the snap. These tests should be limited to
+  #           the functionality of the snap's content itself. If you instead wish
+  #           to test building the snap (that is to say, testing snapcraft), add
+  #           that workflow to the snap-build.yaml workflow
+  lint_automount_actions:
+    name: Lint job for automount-actions snap
+    runs-on: ubuntu-22.04
+    needs: check_automount_actions
+    if: needs.check_automount_actions.outputs.run_job == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Tests for automount-actions snap
+        run: |
+          # Install shellcheck
+          sudo apt-get install shellcheck
+
+          # Run shellcheck on our scripts
+          shellcheck --severity=error \
+            automount-actions/scripts/bin/auto-install.sh \
+            automount-actions/scripts/bin/auto-mount.sh
+
+          # TODO: run the test suite
