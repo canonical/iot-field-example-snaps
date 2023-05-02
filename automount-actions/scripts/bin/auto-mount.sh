@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# wait_for_fifo makes sure our fifo exists for auto-install
+# wait_for_fifo makes sure our fifo exists for auto-install.sh
 wait_for_fifo() {
     [ ! -p "$WATCH_FILE" ] || return 0
 
@@ -51,7 +51,7 @@ try_mount() {
         return 0
     fi
 
-    # Add the mountpoint to our fifo for auto-install
+    # Add the mountpoint to our fifo for auto-install.sh
     wait_for_fifo
     echo "$_target" >> "$WATCH_FILE"
 }

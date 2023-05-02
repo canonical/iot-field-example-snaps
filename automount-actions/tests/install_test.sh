@@ -1,6 +1,6 @@
 . "${TESTDIR}/common"
 
-. "${SNAP}/bin/auto-install"
+. "${SNAP}/bin/auto-install.sh"
 
 add_test find_assertions_test
 find_assertions_test() {

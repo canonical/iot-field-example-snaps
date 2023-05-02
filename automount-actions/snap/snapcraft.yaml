@@ -16,7 +16,7 @@ confinement: strict
 # the gadget snap.
 apps:
   auto-mount:
-    command: usr/bin/auto-mount
+    command: usr/bin/auto-mount.sh
     daemon: simple
     install-mode: disable
     plugs: [mntctl]
@@ -28,7 +28,7 @@ apps:
     #  WATCH_FILE: /tmp/mounts.fifo
 
   auto-install:
-    command: usr/bin/auto-install
+    command: usr/bin/auto-install.sh
     daemon: simple
     install-mode: disable
     plugs: [mntctl,snapd-control]

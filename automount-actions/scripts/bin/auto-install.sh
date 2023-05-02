@@ -14,7 +14,7 @@ mklog() {
 }
 
 # log to SNAP_COMMON and TTY
-# _log_file is created by auto-install and will exist
+# _log_file is created by auto-install.sh and will exist
 # shellcheck disable=2154
 log() {
     printf '%s %s\n' \
