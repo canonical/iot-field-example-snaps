@@ -43,3 +43,35 @@ the i.MX platform from NXP, but can be modified to cover other platforms.
 ## Contributing
 
 You should sign the [Canonical contributor license agreement](https://ubuntu.com/legal/contributors).
+
+Commits should be formatted as such:
+
+* Entire message should read as:
+
+```
+<{example,file/folder} name>: short and sweet description
+
+Further details if required
+
+Signed-off-by: <author name> <author email>
+```
+
+* Include a signoff for each commit using `git commit -s`
+    * To amend prior commits with a signoff, do `git rebase --signoff
+      HEAD~<number of commits>`
+
+* You should use `<example name>` if you are specifically adding an entire example
+snap.
+
+* If you are modifying the root of the repository (e.g. modifying/adding
+`.github`, `/README.md`, etc.), you should use one of `github`, `README`,
+`gitignore`, `LICENSE`, etc.
+
+* If you are adding something to a particular file, it would be sufficient to say
+`<file/folder name>: short and sweet description` and include an elaboration of
+what is being added to which example in further details.
+
+* Commits should attempt to be atomic though PRs need not be restricted to a
+single folder or file, as long as the content change can be logically grouped.
+
+Please follow the Issue and PR template as best as possible.
