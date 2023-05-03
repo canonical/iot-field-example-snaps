@@ -49,3 +49,81 @@ jobs:
         id: build-snap
       - run: |
           sudo snap install --dangerous ${{ steps.build-snap.outputs.snap }}
+
+  build_using_docker:
+    name: Build job for using-docker snap
+    runs-on: ubuntu-22.04
+    outputs:
+      snap-file: ${{ steps.build-snap.outputs.snap }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Fetch images
+        run: |
+          # Make the required directory our snapcraft.yaml will check
+          mkdir -p using-docker/images
+
+          # Fetch the images and save them to the created directory
+          docker pull hello-world
+          docker save -o using-docker/images/hello-world.docker hello-world
+      - name: Test build of using-docker snap
+        uses: snapcore/action-build@v1
+        with:
+          path: using-docker/
+          build-info: true
+          snapcraft-channel: 7.x/edge
+        id: build-snap
+      - run: |
+          sudo snap install --dangerous ${{ steps.build-snap.outputs.snap }}
+
+          # Connect the required interfaces
+          sudo snap connect tocker:docker-executables docker:docker-executables
+          sudo snap connect tocker:docker             docker:docker-daemon
+
+          # Test basic usage
+          sudo tocker hello-world || {
+            echo Failed to run simple `docker run` example!
+            exit 1
+          }
+
+          for service in ticker nginx-volume edgex; do
+            sudo snap start --enable tocker.${service}
+          done
+
+          # Wait for the aforementioned services to start. Nondeterministic.
+          sleep 60
+
+          # Test standing up an nginx container
+          # Requires tocker.ticker
+          systemctl is-active snap.tocker.ticker || {
+            echo ticker service is not running!
+            exit 1
+          }
+
+          sudo docker inspect \
+            --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' \
+            composers-client-1
+
+          # Test if EdgeX successfully started
+          # Requires tocker.edgex
+          systemctl is-active snap.tocker.edgex || {
+            echo edgex service is not running!
+            exit 1
+          }
+
+          sudo curl http://localhost:59880/api/v2/ping | grep -q apiVersion || {
+            echo Failed to ping EdgeX!
+            exit 1
+          }
+          sudo curl http://localhost:8500/ui/dc1/services | grep -q Consul || {
+            echo Failed to fetch EdgeX services!
+            exit 1
+          }
+
+          # Test the REST API
+          for subcommand in list image server start; do
+            sudo tocker.rest $subcommand || {
+              echo Failed to run $subcommand
+              exit 1
+            }
+          done
