@@ -40,6 +40,13 @@ qt-imx is a PoC snap for how to include proprietary graphics libraries and Qt
 for displaying graphical elements to a display. The example specifically targets
 the i.MX platform from NXP, but can be modified to cover other platforms.
 
+### using-docker
+
+using-docker contains a collection of minimal tooling (written as very trivial
+shell scripts) and a comprehensive `snapcraft.yaml` to showcase what
+orchestrating various Docker containers on an Ubuntu Core system might look
+like.
+
 ## Contributing
 
 You should sign the [Canonical contributor license agreement](https://ubuntu.com/legal/contributors).

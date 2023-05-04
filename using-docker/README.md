@@ -10,7 +10,7 @@ It requires the Docker snap.
 **REMEMBER**: the [docker interface](https://github.com/snapcore/snapd/blob/cdf2a1577ac7b8f98b1201b0ae5fd8f3b3d10a52/interfaces/builtin/docker_support.go#L59-L63)
 is potentially HIGHLY dangerous. It is a very permissive interface and great
 caution should be used before deploying the Docker snap in production. It is
-recommended to migrate from using Docker containers to placing application
+recommended to migrate from using Docker containers to placing applications
 within snaps directly.
 
 
@@ -32,10 +32,9 @@ All apps are scripts available in `$SNAP/usr/bin` in the built snap and viewable
 here in [`src/usr/bin`](src/usr/bin).
 
 Each app declares an environment and a set of plugs. The environment defines the
-location of the Docker executables and the relevant python libraries (for apps
-which use `docker-compose`), and the plugs are one of docker or
-docker-executables depending on if we need *only* the Docker socket or if we
-also need the various other executables and libraries.
+location of the Docker executables and the relevant python libraries and the
+plugs are one of `docker` or `docker-executables` depending on if we need *only* the
+Docker socket or if we also need the various other executables and libraries.
 
 Most if not all of the following apps could be improved to make them more
 resilient or feature-rich. These additions are use-case dependent, the intention
@@ -43,8 +42,8 @@ of this snap is to a show a minimum-viable collection of tools and examples.
 
 #### `tocker`
 
-A trivial example; literally just executes `docker run "$1"`, with `$1` being
-the argument given to `tocker` at the CLI.
+A trivial example; literally just executes `docker run "$@"`, with `$@` being
+the arguments given to `tocker` at the CLI.
 
 
 #### `ticker`
@@ -62,7 +61,7 @@ Demonstrates a synthesis between the `ticker` app's daemon functionality and the
 
 #### `jenkins{1,2}`
 
-Two Docker containers are created which include a specific volume in order to
+Two Docker containers are created which declare a specific volume in order to
 share relevant files and configuration.
 
 
@@ -99,7 +98,7 @@ this compose file to work around a known Apparmor limitation.
 
 #### seed-image
 
-Uses `docker` on the host machine to download various container images at
+Uses `docker` on the build machine to download various container images at
 build-time to then create on the target machine at run- or install-time. Note
 that these containers could also be pre-downloaded and added to the `images/`
 directory.
@@ -147,3 +146,7 @@ snap install --dangerous tocker_*.snap
 snap connect tocker:docker-executables docker:docker-executables
 snap connect tocker:docker             docker:docker-daemon
 ```
+
+Autoconnections for these interfaces can be managed via the [Store dashboard
+UI](dashboard.snapcraft.io) and in the case of the super-privileged docker
+interface, requested via a support ticket.
