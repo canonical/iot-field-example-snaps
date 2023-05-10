@@ -2,6 +2,6 @@
 
 if snapctl is-connected docker; then
     for image in "$SNAP/usr/share/images/"*.docker; do
-        docker import "$image"
+        docker load --input "$image"
     done
 fi
