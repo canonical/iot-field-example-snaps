@@ -30,8 +30,6 @@ apps:
     plugs: [docker, docker-executables]
     environment:
       PATH: $SNAP/docker-bin/bin:$PATH
-      # TODO: genericize getting the proper python path
-      PYTHONPATH: $SNAP/docker-bin/lib/python3.6/site-packages:$PYTHONPATH
       DOCKER_CONFIG: $SNAP_COMMON/.docker
 
   nginx-volume:
@@ -64,8 +62,6 @@ apps:
     plugs: [docker, docker-executables]
     environment:
       PATH: $SNAP/docker-bin/bin:$PATH
-      # TODO: genericize getting the proper python path
-      PYTHONPATH: $SNAP/docker-bin/lib/python3.6/site-packages:$PYTHONPATH
       DOCKER_CONFIG: $SNAP_COMMON/.docker
 
   rest:
@@ -138,16 +134,16 @@ plugs:
 #    write:
 #      - $HOME/.docker
 
+layout:
+  /usr/libexec/docker/cli-plugins:
+    symlink: $SNAP/docker-bin/usr/libexec/docker/cli-plugins
+
 hooks:
   configure:
     plugs: [docker, docker-executables]
     environment:
       PATH: $SNAP/docker-bin/bin:$PATH
-      # TODO: genericize getting the proper python path
-      PYTHONPATH: $SNAP/docker-bin/lib/python3.6/site-packages:$PYTHONPATH
   connect-plug-docker:
     plugs: [docker, docker-executables]
     environment:
       PATH: $SNAP/docker-bin/bin:$PATH
-      # TODO: genericize getting the proper python path
-      PYTHONPATH: $SNAP/docker-bin/lib/python3.6/site-packages:$PYTHONPATH
