@@ -122,6 +122,7 @@ parts:
     stage-packages: [curl]
 
 plugs:
+  # NOTE: the docker-executables interface may one day be deprecated
   docker-executables:
     interface: content
     content: executables
