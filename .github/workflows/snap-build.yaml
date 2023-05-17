@@ -5,7 +5,7 @@ name: Snap Builds CI
 # catching bugs or regressions.
 
 # Run the jobs on:
-#   1) 12PM UTC on the 15th of each month
+#   1) 12PM UTC weekly on Monday
 on:
   schedule:
     - cron: '0 12 * * 1'
