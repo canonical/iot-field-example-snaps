@@ -12,6 +12,10 @@ description: |
 grade: stable
 confinement: strict
 
+# Due to recent changes in the Docker snap, snapd 2.59.1 is required.
+# If an older version of snapd is needed, please use Docker on 18/stable.
+assumes: [snapd2.59.1]
+
 # The daemons are installed as disabled because the docker{-executables} and
 # interfaces are not auto-connecting. They can be installed as enabled if
 # interface auto-connection is enabled either in the Store UI or in the gadget snap.

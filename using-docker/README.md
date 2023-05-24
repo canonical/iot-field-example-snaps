@@ -4,7 +4,9 @@ This snap provides examples of how docker workloads can be deployed on Ubuntu
 Core by utilizing the docker commands, compose-files, and other artifacts to
 manage the lifecycle of one or more docker workloads.
 
-It requires the Docker snap.
+It requires the Docker snap. After recent changes, the Docker snap requires
+`snapd` 2.59.1. If an older version of `snapd` is required, please use the Docker
+snap available on 18/stable.
 
 
 **REMEMBER**: the [docker interface](https://github.com/snapcore/snapd/blob/cdf2a1577ac7b8f98b1201b0ae5fd8f3b3d10a52/interfaces/builtin/docker_support.go#L59-L63)
@@ -19,7 +21,7 @@ within snaps directly.
 This snap showcases several things:
 
 1) interacting directly with Docker through a wrapper at the CLI
-2) creating e.g. a web server by using a daemon from a docker-compose file
+2) creating e.g. a web server by using a daemon from a Docker compose file
 3) leverage volumes to share content between containers
 4) host an elaborate system such as EdgeX
 5) Pre-seeding Docker images to create containers at install- or run-time
@@ -49,7 +51,7 @@ the arguments given to `tocker` at the CLI.
 #### `ticker`
 
 A very rudimentary daemon which stands up an nginx container using
-`docker-compose` using the corresponding
+`docker compose` using the corresponding
 `$SNAP/usr/share/composers/nginx-compose.yml` file.
 
 
