@@ -129,7 +129,7 @@ plugs:
   # NOTE: the docker-executables interface may one day be deprecated
   docker-executables:
     interface: content
-    content: executables
+    content: docker-executables
     target: $SNAP/docker-bin
     default-provider: docker
 # In general the personal-files interface should not be used
