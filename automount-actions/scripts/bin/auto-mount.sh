@@ -60,9 +60,6 @@ try_mount() {
 cleanup () {
     _exit_status=$?
 
-    [ -z "${CLEANUP_HAS_RUN:-}" ] || return 0
-    CLEANUP_HAS_RUN=1
-
     sync
 
     # TODO: parsing ls is potentially unreliable. find is an alternative but the
@@ -92,7 +89,8 @@ main() {
     : "${WATCH_FILE:=/tmp/mounts.fifo}"; readonly WATCH_FILE
     : "${MOUNT_DIR:="$(mktemp -d)"}";    readonly MOUNT_DIR
 
-    trap cleanup EXIT INT TERM
+    trap exit    INT TERM
+    trap cleanup EXIT
 
     watch_devices
 }
