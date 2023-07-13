@@ -208,9 +208,6 @@ process_mounts() {
 cleanup() {
     _exit_status=$?
 
-    [ -z "${CLEANUP_HAS_RUN:-}" ] || return 0
-    CLEANUP_HAS_RUN=1
-
     rm -f "$WATCH_FILE"
 
     # Exit with 0 if we're interrupted with INT or TERM
@@ -225,7 +222,8 @@ main() {
     : "${WATCH_FILE:=/tmp/mounts.fifo}"; readonly WATCH_FILE
     [ -p "$WATCH_FILE" ] || mkfifo "$WATCH_FILE"
 
-    trap cleanup EXIT INT TERM
+    trap exit    INT TERM
+    trap cleanup EXIT
 
     process_mounts "$WATCH_FILE"
 }
