@@ -26,10 +26,10 @@ on:
 #           build-info: true
 #           snapcraft-channel: {track}/{risk}/{branch}
 #         id: build-snap
-#       run: |
-#         # At least test that the snap can be installed
-#         sudo snap install --dangerous ${{ steps.build-snap.outputs.snap }}
-#       - name: Upload Snap
+#       - run: |
+#           # At least test that the snap can be installed
+#           sudo snap install --dangerous ${{ steps.build-snap.outputs.snap }}
+#       - name: Upload Snap Artifact
 #         uses: actions/upload-artifact@v3
 #         with:
 #           name: {directory}-snap
@@ -50,7 +50,7 @@ jobs:
         id: build-snap
       - run: |
           sudo snap install --dangerous ${{ steps.build-snap.outputs.snap }}
-      - name: Upload Snap
+      - name: Upload Snap Artifact
         uses: actions/upload-artifact@v3
         with:
           name: automount-actions-snap
@@ -131,7 +131,7 @@ jobs:
               exit 1
             }
           done
-      - name: Upload Snap
+      - name: Upload Snap Artifact
         uses: actions/upload-artifact@v3
         with:
           name: using-docker-snap
