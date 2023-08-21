@@ -136,3 +136,23 @@ jobs:
         with:
           name: using-docker-snap
           path: ${{ steps.build-snap.outputs.snap }}
+  build_basic_server:
+    name: Build job for basic-server snap
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Test build of basic-server snap
+        uses: snapcore/action-build@v1
+        with:
+          path: basic-server/
+          build-info: true
+          snapcraft-channel: latest/edge
+        id: build-snap
+      - run: |
+          sudo snap install --dangerous ${{ steps.build-snap.outputs.snap }}
+      - name: Upload Snap Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: basic-server-snap
+          path: ${{ steps.build-snap.outputs.snap }}
