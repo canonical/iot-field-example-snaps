@@ -16,8 +16,6 @@ on:
 #   build_{directory}:
 #     name: Build job for {directory} snap
 #     runs-on: ubuntu-{target}
-#     outputs:
-#       snap-file: ${{ steps.build-snap.outputs.snap }}
 #     steps:
 #       - name: Checkout
 #         uses: actions/checkout@v3
@@ -31,12 +29,15 @@ on:
 #       run: |
 #         # At least test that the snap can be installed
 #         sudo snap install --dangerous ${{ steps.build-snap.outputs.snap }}
+#       - name: Upload Snap
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: {directory}-snap
+#           path: ${{ steps.build-snap.outputs.snap }}
 jobs:
   build_automount_actions:
     name: Build job for automount-actions snap
     runs-on: ubuntu-22.04
-    outputs:
-      snap-file: ${{ steps.build-snap.outputs.snap }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -49,12 +50,15 @@ jobs:
         id: build-snap
       - run: |
           sudo snap install --dangerous ${{ steps.build-snap.outputs.snap }}
+      - name: Upload Snap
+        uses: actions/upload-artifact@v3
+        with:
+          name: automount-actions-snap
+          path: ${{ steps.build-snap.outputs.snap }}
 
   build_using_docker:
     name: Build job for using-docker snap
     runs-on: ubuntu-22.04
-    outputs:
-      snap-file: ${{ steps.build-snap.outputs.snap }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -127,3 +131,8 @@ jobs:
               exit 1
             }
           done
+      - name: Upload Snap
+        uses: actions/upload-artifact@v3
+        with:
+          name: using-docker-snap
+          path: ${{ steps.build-snap.outputs.snap }}
