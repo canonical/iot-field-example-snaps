@@ -19,6 +19,12 @@ assertions on a device. The snaps and assertions are provided by a block device
 (e.g. a USB stick). This device is automatically mounted and checked for the
 correct files, and those files are then processed using the snapd REST API.
 
+### basic-server
+
+basic-server provides a simple configurable server example that utilizes many
+of the features available for snaps. By default, it echos "Hello, world!" to
+port 9999 on localhost.
+
 ### daemon-control
 
 daemon-control is a demonstration of how to orchestrate daemon startup between
