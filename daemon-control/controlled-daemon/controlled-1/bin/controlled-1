@@ -1,6 +1,0 @@
-#/bin/bash
-
-while true; do
-	echo "===== ${SNAP_NAME}.controlled-1 is running"
-	sleep 5
-done

@@ -19,15 +19,6 @@ assertions on a device. The snaps and assertions are provided by a block device
 (e.g. a USB stick). This device is automatically mounted and checked for the
 correct files, and those files are then processed using the snapd REST API.
 
-### daemon-control
-
-daemon-control is a demonstration of how to orchestrate daemon startup between
-snaps. the controlled-daemon can be any snap which provides daemons, and the
-controller-daemon shows how one snap could control those daemons.
-
-This example should be considered a solution until cross-snap daemon startup
-ordering is supported by snapd.
-
 ### one-codebase-many-snaps
 
 one-codebase-many-snaps shows how one could have a single repository build
