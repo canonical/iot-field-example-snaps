@@ -1,8 +1,0 @@
-# standard snapcraft ignores
-parts/
-stage/
-prime/
-*.snap
-
-# Only in this case, we ignore any symlinks
-snap

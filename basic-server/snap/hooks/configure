@@ -1,7 +1,0 @@
-#!/bin/sh -eu
-
-if [ -z "$(snapctl get daemon.port)" ]; then
-  snapctl set daemon.port=9999
-fi
-
-snapctl restart "${SNAP_INSTANCE_NAME}.daemon"
