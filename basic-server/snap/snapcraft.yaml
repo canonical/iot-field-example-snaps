@@ -1,5 +1,5 @@
 name: basic-server
-base: core22
+base: core20
 version: '0.1'
 summary: Simple server that greets clients
 description: |
@@ -30,4 +30,4 @@ parts:
       - ncat
     stage:
       - -usr/share
-      - -usr/lib/${CRAFT_ARCH_TRIPLET}/liblua5.3-c++*
+      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/liblua5.3-c++*
