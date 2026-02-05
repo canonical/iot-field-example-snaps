@@ -4,7 +4,7 @@ _Canonical Devices and IoT, Field Engineering_
 
 
 Version: 1.3
-
+Snap base: core22 (Ubuntu 22.04)
 
 ## Introduction
 
@@ -19,7 +19,22 @@ into other snaps.
 The source for the automount-actions snap can be found
 [here](https://github.com/canonical/iot-field-example-snaps/tree/main/automount-actions).
 
+##Quick Start
+```bash
+1. Install the snap:
+sudo snap install automount-actions
 
+2. Connect required interfaces:
+sudo snap connect automount-actions:mntctl
+sudo snap connect automount-actions:snapd-control
+
+3. Enable and start services:
+sudo snap start --enable automount-actions
+
+4. Verify connections:
+snap connecitons automount-actions
+sudo snap services automount-actions
+```
 ## Architecture
 
 This snap uses the `mount-control` interface to mount block devices of a
@@ -120,7 +135,13 @@ disable`; manually enable the services with `snap start --enable
 automount-actions.auto-{install,mount}` or remove the `install-mode` from the
 `snapcraft.yaml` for both services.
 
-
+After connecting interfaces:
+```
+snap connections automount-actions
+Interface      Plug                             Slot            Notes 
+mount-control  automount-actions:mntctl         :mount-control  manual
+snapd-control  automount-actions:snapd-control  :snapd-control  manual
+```
 ### Structure of a correct block device
 
 Copy the snap and assertion files to some directory on a USB drive. The snaps
