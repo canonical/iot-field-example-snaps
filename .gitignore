@@ -1,0 +1,21 @@
+# Snap build artifacts
+*.snap
+*.snap-build
+parts/
+stage/
+prime/
+*.tar.bz2
+
+# Snapcraft
+snapcraft-*.txt
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

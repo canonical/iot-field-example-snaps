@@ -1,5 +1,7 @@
 # Using Docker from a snap
 
+Base snap: core24 (Ubuntu 24.04)
+
 This snap provides examples of how docker workloads can be deployed on Ubuntu
 Core by utilizing the docker commands, compose-files, and other artifacts to
 manage the lifecycle of one or more docker workloads.
