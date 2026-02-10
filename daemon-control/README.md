@@ -5,6 +5,9 @@ _Canonical Devices and IoT, Field Engineering_
 
 Version 1.3
 
+
+Base Snap: core24 (Ubuntu 24.04)
+
 ## Introduction
 
 This document presents an approach through which one snap can control startup of

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository contains a collection of snaps created by the Devices Field
+This repository contains a collection of snaps (utilizing the base snap core24) created by the Devices Field
 team. They are not generally recommended for production but instead act as
 proof-of-concept examples for accomplishing particular tasks.
 

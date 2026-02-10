@@ -1,0 +1,20 @@
+#!/bin/bash
+# Install hook - initialize configuration
+
+LOG_FILE="$SNAP_COMMON/hooks.log"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S.%3N')
+
+echo "[$TIMESTAMP] === INSTALL HOOK ===" >> "$LOG_FILE"
+echo "[$TIMESTAMP] Version: $SNAP_VERSION, Revision: $SNAP_REVISION" >> "$LOG_FILE"
+
+# Initialize defaults
+snapctl set firmware-fail=false
+snapctl set firmware-delay=5
+snapctl set database-fail=false
+snapctl set webui-fail=false
+
+# Remove stale marker files
+rm -f "$SNAP_COMMON/database.ready"
+
+echo "[$TIMESTAMP] Configuration initialized" >> "$LOG_FILE"
+exit 0

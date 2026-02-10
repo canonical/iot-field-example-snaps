@@ -1,0 +1,61 @@
+name: rollback-test
+base: core24
+version: '5.1'
+summary: Test snap for rollback scenarios - firmware update use case
+description: |
+  Simulates a real-world scenario:
+  - Database service (simple daemon)
+  - Web UI service (depends on database)
+  - Firmware updater (oneshot - failure should trigger rollback)
+
+  Configure via:
+    snap set rollback-test firmware-fail=true      # Firmware update fails
+    snap set rollback-test firmware-delay=120      # Delay in seconds (test timeout)
+    snap set rollback-test database-fail=true      # Database fails
+    snap set rollback-test webui-fail=true         # Web UI fails
+
+grade: devel
+confinement: strict
+
+apps:
+  # ONESHOT: Firmware updater - runs first, failure = ROLLBACK
+  firmware-updater:
+    command: bin/firmware-updater.sh
+    daemon: oneshot
+    start-timeout: 20m
+    # Extended timeout to 20 minutes for long-running firmware updates
+    # Oneshot failure (or timeout) triggers rollback
+
+  # SIMPLE DAEMON: Database - runs after firmware
+  database:
+    command: bin/database.sh
+    daemon: simple
+    after: [firmware-updater]
+    restart-condition: on-failure
+    # Simple daemon failure does NOT trigger rollback
+
+  # SIMPLE DAEMON: Web UI - depends on database
+  webui:
+    command: bin/webui.sh
+    daemon: simple
+    after: [database]
+    restart-condition: on-failure
+    # Simple daemon failure does NOT trigger rollback
+
+  # Helper commands
+  check-logs:
+    command: bin/check-logs.sh
+  trigger-fail:
+    command: bin/trigger-fail.sh
+  status:
+    command: bin/status.sh
+
+parts:
+  scripts:
+    plugin: dump
+    source: bin
+    organize:
+      "*.sh": bin/
+    override-prime: |
+      craftctl default
+      chmod +x $CRAFT_PRIME/bin/*.sh
