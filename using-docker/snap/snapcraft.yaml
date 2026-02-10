@@ -1,5 +1,5 @@
 name: tocker
-base: core22
+base: core20
 version: '1.0'
 summary: An example snap for interacting with the Docker snap
 description: |
@@ -79,21 +79,21 @@ parts:
 
   edgex:
     plugin: nil
+    build-packages: [curl]
     override-pull: |
       _release=levski
       _compose=docker-compose-no-secty
       curl -fLo edgex-compose.yml \
          https://raw.githubusercontent.com/edgexfoundry/edgex-compose/${_release}/${_compose}.yml
 
-      install -Dm644 edgex-compose.yml ${CRAFT_PART_BUILD}/edgex-compose.yml
     override-build: |
       # Work around a known Apparmor issue:
       # https://bugs.launchpad.net/snappy/+bug/1908448
       sed -i '/security_opt\:/{N;d;}' edgex-compose.yml
       sed -i '/- no-new-privileges\:true/d' edgex-compose.yml
 
-      install -Dm644 edgex-compose.yml \
-        ${CRAFT_PART_INSTALL}/usr/share/composers/edgex-compose.yml
+      install -Dm644 ${SNAPCRAFT_PART_SRC}/edgex-compose.yml \
+        ${SNAPCRAFT_PART_INSTALL}/usr/share/composers/edgex-compose.yml
 
   seed-image:
     plugin: nil
@@ -101,12 +101,11 @@ parts:
     override-build: |
       # If we already have images in the project directory, assume that is all
       # of the images we want to include
-      craftctl default
 
       _images_exist=false
-      for _image in "${CRAFT_PROJECT_DIR}/images/"*.docker; do
+      for _image in "${SNAPCRAFT_PROJECT_DIR}/images/"*.docker; do
         [ -e "$_image" ] || continue
-        install -Dm644 "$_image" "${CRAFT_PART_INSTALL}/usr/share/images/${_image##*/}"
+        install -Dm644 "$_image" "${SNAPCRAFT_PART_INSTALL}/usr/share/images/${_image##*/}"
         _images_exist=true
       done
 
@@ -114,10 +113,10 @@ parts:
         systemctl is-active -q docker || systemctl start docker
         docker pull hello-world       || sleep 30 && docker pull hello-world
 
-        mkdir -p "${CRAFT_PART_INSTALL}/usr/share/images"
+        mkdir -p "${SNAPCRAFT_PART_INSTALL}/usr/share/images"
         # Fetch a trivial example
         docker save \
-          -o "${CRAFT_PART_INSTALL}/usr/share/images/hello-world.docker" \
+          -o "${SNAPCRAFT_PART_INSTALL}/usr/share/images/hello-world.docker" \
           hello-world
       }
 

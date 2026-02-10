@@ -1,5 +1,5 @@
 name: test-controller-daemons
-base: core18
+base: core20
 version: '1'
 summary: test a daemon controller
 description: a daemon controller
@@ -36,5 +36,7 @@ parts:
   snapdapi:
     source: .
     plugin: go
-    go-importpath: github.com/knitzsche/test-controller-daemons
-    build-packages: [ gcc ]
+    build-packages: [ gcc, git ]
+    override-build: |
+      go mod tidy
+      snapcraftctl build

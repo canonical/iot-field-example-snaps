@@ -43,9 +43,9 @@ func (a *ClientAdapter) Snap(name string) (*client.Snap, *client.ResultInfo, err
 	return a.snapdClient.Snap(name)
 }
 
-// 
+//
 func (a *ClientAdapter) Start(names []string, opts client.StartOptions) (changeID string, err error) {
-	return a.snapdClient.Start(names, opts)
+	return a.snapdClient.Start(names, client.ScopeSelector{}, client.UserSelector{}, opts)
 }
 // List returns the list of all snaps installed on the system
 // with names in the given list; if the list is empty, all snaps.
