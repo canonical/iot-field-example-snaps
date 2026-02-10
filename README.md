@@ -12,7 +12,7 @@ potential limitations or ways to extend behavior.
 
 ## Snaps
 
-###daemon-control
+### daemon-control
 
 daemon-control is a demonstration of how to orchestrate daemon startup between
 snaps. the controlled-daemon can be any snap which provides daemons, and the
@@ -21,7 +21,7 @@ controller-daemon shows how one snap could control those daemons.
 This example should be considered a solution until cross-snap daemon startup
 ordering is supported by snapd.
 
-##Contributing
+## Contributing
 
 You should sign the [Canonical contributor license agreement](https://ubuntu.com/legal/contributors).
 
