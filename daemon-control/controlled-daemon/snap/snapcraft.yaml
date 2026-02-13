@@ -1,5 +1,5 @@
 name: test-controlled-daemons
-base: core18
+base: core26
 version: '1'
 summary: test a controlled daemon
 description: a controlled daemon

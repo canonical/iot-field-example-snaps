@@ -1,5 +1,5 @@
 name: tocker
-base: core22
+base: core26
 version: '1.0'
 summary: An example snap for interacting with the Docker snap
 description: |

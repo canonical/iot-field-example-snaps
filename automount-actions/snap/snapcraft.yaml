@@ -1,5 +1,5 @@
 name: automount-actions
-base: core22
+base: core26
 version: '1.0'
 summary: Automatically mount USB and take actions
 description: |
