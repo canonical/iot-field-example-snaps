@@ -19,9 +19,8 @@ description: |
 grade: devel
 confinement: devmode
 
-platforms:
-  arm64:
-    build-on: [amd64]
+architectures:
+  - build-on: [amd64]
     build-for: [arm64]
 
 plugs:
@@ -162,9 +161,9 @@ parts:
       unset PKG_CONFIG_PATH
 
       ./configure -debug -nomake tests -nomake examples -opensource -confirm-license \
-        -prefix /usr -sysroot ${CRAFT_PROJECT_DIR}/stage \
-        -opengl es2 -no-pulseaudio -qpa eglfs -qt-xcb -qt-pcre \
-        -qt-libjpeg -qt-libpng -qt-freetype -qt-zlib -qt-xkbcommon-x11 \
+        -prefix /usr -sysroot ${CRAFT_STAGE} \
+        -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -qt-pcre \
+        -qt-libjpeg -qt-libpng -qt-freetype -qt-zlib \
         -pkg-config -no-mtdev \
         -xkb-config-root /snap/qt-imx/current/usr/share/X11/xkb \
         -device ${DEVICE} ${DEVICE_OPTIONS} \
@@ -204,9 +203,11 @@ parts:
       - strace
       - gdb
     override-build: |
-      ${CRAFT_PROJECT_DIR}/stage/usr/bin/qmake
+      ${CRAFT_STAGE}/usr/bin/qmake
       make -j$(nproc)
       make INSTALL_ROOT=${CRAFT_PART_INSTALL} install
+    stage:
+      - -lib
 
 apps:
   hello-world:
