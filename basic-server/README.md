@@ -2,7 +2,9 @@
 
 _Canonical Devices and IoT, Field Engineering_
 
-Snap base: core20 (Ubuntu 20.04)
+Base Snap: core20 (Ubuntu 20.04)
+
+
 ## Introduction
 
 A simple server snap that demonstrates a basic TCP server using 'ncat'. When a client conneccts , the server responds with a "Hello, World!"
