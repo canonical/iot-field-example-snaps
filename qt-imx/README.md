@@ -2,6 +2,8 @@
 
 ***Notice**: This is an example and should not be used in production.*
 
+Base Snap: core20 (Ubuntu 20.04)
+
 ## Overview
 
 Qt application libraries compiled with support for the eglfs backend on i.MX 6 & 8 SoCs for use on Ubuntu Core 20.
