@@ -3,8 +3,9 @@
 ## Overview
 
 This repository contains a collection of snaps created by the Devices Field
-team. They are not generally recommended for production but instead act as
-proof-of-concept examples for accomplishing particular tasks.
+team. All snaps in this branch are on base snap core22. They are not generally 
+recommended for production but instead act as proof-of-concept examples for 
+accomplishing particular tasks.
 
 Each subdirectory is a different example, each with their own accompanying
 READMEs which explain what they do, how they function, build instructions, and
