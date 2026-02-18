@@ -1,5 +1,5 @@
 name: itrue-qt-imx-snap
-base: core20
+base: core26
 version: '5.6.3'
 summary: Qt application libraries for i.MX 6 & 8 SoCs
 description: |
@@ -19,6 +19,11 @@ description: |
 grade: devel
 confinement: devmode
 
+platforms:
+  arm64:
+    build-on: [amd64]
+    build-for: [arm64]
+
 plugs:
   gpu:
     interface: custom-device
@@ -30,22 +35,22 @@ parts:
     build-packages:
       - wget
     override-pull: |
-      if [ "${SNAPCRAFT_TARGET_ARCH}" = "armhf" ]; then
+      if [ "${CRAFT_TARGET_ARCH}" = "armhf" ]; then
         export WGET_ARCH="aarch32"
-      elif [ "${SNAPCRAFT_TARGET_ARCH}" = "arm64" ]; then
+      elif [ "${CRAFT_TARGET_ARCH}" = "arm64" ]; then
         export WGET_ARCH="aarch64"
       else
         echo "not supported!"
         exit -1
       fi
-      rm -f ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
+      rm -f ${CRAFT_PART_SRC}/imx-gpu-viv.bin
       wget https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/imx-gpu-viv-6.4.3.p0.0-${WGET_ARCH}.bin \
-        -O ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
-      chmod a+x ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin
-      ${SNAPCRAFT_PART_SRC}/imx-gpu-viv.bin --auto-accept --force
+        -O ${CRAFT_PART_SRC}/imx-gpu-viv.bin
+      chmod a+x ${CRAFT_PART_SRC}/imx-gpu-viv.bin
+      ${CRAFT_PART_SRC}/imx-gpu-viv.bin --auto-accept --force
     organize:
-      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/fb/*: usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/
-      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/*.so*: usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/
+      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/fb/*: usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/
+      imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/*.so*: usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/
       imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/pkgconfig: usr/lib/pkgconfig
       imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/dri: usr/lib/dri
       imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/include: usr/include
@@ -76,10 +81,10 @@ parts:
       - libbsd0
       - libglvnd0
       - libdrm2
-      - libicu66
+      - libicu78
       - libcrypt1
       - libdbus-1-3
-      - libffi7
+      - libffi8
       - libglapi-mesa
       - libwayland-client0
       - libwayland-cursor0
@@ -102,28 +107,28 @@ parts:
       - libpcre3
       - libuuid1
       - libselinux1
-      - libsepol1
+      - libsepol2
       - libmount1
     override-build: |
-      snapcraftctl build
+      craftctl default
       # Move all files from /lib to /usr/lib and create a symlink
-      cp -r ${SNAPCRAFT_PART_INSTALL}/lib/* ${SNAPCRAFT_PART_INSTALL}/usr/lib/
-      rm -rf ${SNAPCRAFT_PART_INSTALL}/lib
-      ln -sr ${SNAPCRAFT_PART_INSTALL}/usr/lib ${SNAPCRAFT_PART_INSTALL}/lib
+      cp -r ${CRAFT_PART_INSTALL}/lib/* ${CRAFT_PART_INSTALL}/usr/lib/
+      rm -rf ${CRAFT_PART_INSTALL}/lib
+      ln -sr ${CRAFT_PART_INSTALL}/usr/lib ${CRAFT_PART_INSTALL}/lib
     stage:
       # Remove all mesa GL libraries
-      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libGLES*
-      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libGL.*
-      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libEGL*
-      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libGLX*
-      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libvulkan*
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libGLES*
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libGL.*
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libEGL*
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libGLX*
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libvulkan*
       - -usr/include/EGL
       - -usr/include/GL
       - -usr/include/GLES*
       - -usr/include/KHR/khrplatform.h
     prime:
-      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
-      - -usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/libdrm_*
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libdrm_*
       - -usr/lib/udev
       - -usr/lib/cmake
       - -usr/share/doc
@@ -139,7 +144,7 @@ parts:
     build-environment:
       - PATH: /usr/lib/ccache:${PATH}
       - on amd64:
-        - DEVICE_OPTIONS: "-device-option CROSS_COMPILE=${SNAPCRAFT_ARCH_TRIPLET}-"
+        - DEVICE_OPTIONS: "-device-option CROSS_COMPILE=${CRAFT_ARCH_TRIPLET_BUILD_FOR}-"
         - to armhf:
           - DEVICE: "linux-imx6-g++"
         - to arm64:
@@ -155,10 +160,10 @@ parts:
       - pkg-config
       - python-is-python3
     override-pull: |
-      snapcraftctl pull
-      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
-      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0002-Do-not-enforce-CROSS_COMPILE.patch
-      patch -p1 < ${SNAPCRAFT_PROJECT_DIR}/patches/0003-SocketCAN-Fix-compiler-error-SIOCGSTAMP-was-not-decl.patch
+      craftctl default
+      patch -p1 < ${CRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
+      patch -p1 < ${CRAFT_PROJECT_DIR}/patches/0002-Do-not-enforce-CROSS_COMPILE.patch
+      patch -p1 < ${CRAFT_PROJECT_DIR}/patches/0003-SocketCAN-Fix-compiler-error-SIOCGSTAMP-was-not-decl.patch
     override-build: |
       # Unset all snapcraft build variables so they don't interfere
       unset LD
@@ -170,16 +175,16 @@ parts:
       unset PKG_CONFIG_PATH
 
       ./configure -debug -nomake tests -nomake examples -opensource -confirm-license \
-        -prefix /usr -sysroot ${SNAPCRAFT_PROJECT_DIR}/stage \
-        -opengl es2 -no-pulseaudio -qpa eglfs -qt-xcb -qt-pcre \
-        -qt-libjpeg -qt-libpng -qt-freetype -qt-zlib -qt-xkbcommon-x11 \
+        -prefix /usr -sysroot ${CRAFT_STAGE} \
+        -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -qt-pcre \
+        -qt-libjpeg -qt-libpng -qt-freetype -qt-zlib \
         -pkg-config -no-mtdev \
         -xkb-config-root /snap/qt-imx/current/usr/share/X11/xkb \
         -device ${DEVICE} ${DEVICE_OPTIONS} \
         -no-alsa -no-openssl -no-audio-backend -no-use-gold-linker \
-        -extprefix ${SNAPCRAFT_PART_INSTALL}/usr \
+        -extprefix ${CRAFT_PART_INSTALL}/usr \
         -skip qtwebengine \
-        -libdir ${SNAPCRAFT_PART_INSTALL}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/
+        -libdir ${CRAFT_PART_INSTALL}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/
 
       make -j$(nproc)
 
@@ -194,10 +199,10 @@ parts:
       - qt5
     plugin: nil
     override-build: |
-      cat > ${SNAPCRAFT_PART_INSTALL}/qt.conf << EOF
+      cat > ${CRAFT_PART_INSTALL}/qt.conf << EOF
       [Paths]
       Prefix = ../
-      Libraries = ../lib/${SNAPCRAFT_ARCH_TRIPLET}/
+      Libraries = ../lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/
       Sysroot = ../../
       EOF
     organize:
@@ -212,9 +217,11 @@ parts:
       - strace
       - gdb
     override-build: |
-      ${SNAPCRAFT_PROJECT_DIR}/stage/usr/bin/qmake
+      ${CRAFT_STAGE}/usr/bin/qmake
       make -j$(nproc)
-      make INSTALL_ROOT=${SNAPCRAFT_PART_INSTALL} install
+      make INSTALL_ROOT=${CRAFT_PART_INSTALL} install
+    stage:
+      - -lib
 
 apps:
   hello-world:
@@ -234,9 +241,9 @@ build-packages:
   - python3
   - ccache
   - on amd64:
-    - g++-${SNAPCRAFT_ARCH_TRIPLET}
-    - gcc-${SNAPCRAFT_ARCH_TRIPLET}
-    - binutils-${SNAPCRAFT_ARCH_TRIPLET}
+    - g++-${CRAFT_ARCH_TRIPLET_BUILD_FOR}
+    - gcc-${CRAFT_ARCH_TRIPLET_BUILD_FOR}
+    - binutils-${CRAFT_ARCH_TRIPLET_BUILD_FOR}
   - else:
     - g++
 
@@ -249,8 +256,8 @@ layout:
     bind: $SNAP/usr/share/fonts
   /usr/share/glvnd:
     bind: $SNAP/usr/share/glvnd
-  /usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri:
-    bind: $SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/dri
+  /usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri:
+    bind: $SNAP/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/dri
   /usr/share/libdrm:
     bind: $SNAP/usr/share/libdrm
   /usr/lib/fonts:
