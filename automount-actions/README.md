@@ -6,7 +6,7 @@ _Canonical Devices and IoT, Field Engineering_
 Version: 1.3
 
 
-Base Snap: core22 (Ubuntu 22.04)
+Base Snap: core20 (Ubuntu 20.04)
 
 ## Introduction
 
