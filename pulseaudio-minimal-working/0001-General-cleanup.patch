@@ -1,0 +1,372 @@
+From 3d2afb6673cbc554c0ae66df85d8d79b594672fe Mon Sep 17 00:00:00 2001
+From: Dilyn Corner <dilyn.corner@canonical.com>
+Date: Wed, 19 Nov 2025 02:18:14 -0500
+Subject: [PATCH] General cleanup
+
+Reorganize some files and consolidate the parts, modify the scripts to
+be a bit more "practical".
+
+Signed-off-by: Dilyn Corner <dilyn.corner@canonical.com>
+---
+ bin/client-wrapper                    |  31 --------
+ bin/pulseaudio                        |  50 ------------
+ snap/hooks/connect-plug-alsa          |   3 +
+ snap/hooks/install                    |   3 +
+ snap/snapcraft.yaml                   | 108 ++++++++------------------
+ src/bin/client-wrapper                |  19 +++++
+ src/bin/pulseaudio                    |  33 ++++++++
+ {config => src/etc/pulse}/client.conf |   0
+ {config => src/etc/pulse}/default.pa  |   0
+ 9 files changed, 91 insertions(+), 156 deletions(-)
+ delete mode 100755 bin/client-wrapper
+ delete mode 100755 bin/pulseaudio
+ create mode 100755 snap/hooks/connect-plug-alsa
+ create mode 100755 snap/hooks/install
+ create mode 100755 src/bin/client-wrapper
+ create mode 100755 src/bin/pulseaudio
+ rename {config => src/etc/pulse}/client.conf (100%)
+ rename {config => src/etc/pulse}/default.pa (100%)
+
+diff --git a/bin/client-wrapper b/bin/client-wrapper
+deleted file mode 100755
+index 4d5336c..0000000
+--- a/bin/client-wrapper
++++ /dev/null
+@@ -1,31 +0,0 @@
+-#!/bin/sh
+-#
+-# PulseAudio client wrapper for pactl and other utilities
+-#
+-
+-if [ "$(id -u)" -ne 0 ]; then
+-   echo "This script must be run as root" 1>&2
+-   exit 1
+-fi
+-
+-export LD_LIBRARY_PATH="$SNAP/usr/lib/pulseaudio:$LD_LIBRARY_PATH"
+-
+-# Try to connect to the daemon socket
+-# First check if running in system mode
+-if [ -S /var/run/pulse/native ]; then
+-    export PULSE_RUNTIME_PATH=/var/run/pulse
+-    export PULSE_SYSTEM=1
+-else
+-    # Try user mode socket location
+-    export PULSE_RUNTIME_PATH=$SNAP_COMMON/pulse
+-    unset PULSE_SYSTEM
+-fi
+-
+-export PULSE_CLIENTCONFIG=$SNAP/etc/pulse/client.conf
+-
+-unset XDG_RUNTIME_DIR
+-
+-export HOME=$SNAP_COMMON/home
+-mkdir -p "$HOME"
+-
+-exec "$@"
+diff --git a/bin/pulseaudio b/bin/pulseaudio
+deleted file mode 100755
+index 52af4de..0000000
+--- a/bin/pulseaudio
++++ /dev/null
+@@ -1,50 +0,0 @@
+-#!/bin/bash -e
+-
+-# Try multiple possible locations for PulseAudio modules
+-if [ -d "$SNAP/usr/lib/pulse-16.1+dfsg1" ]; then
+-    PA_MODULES_DIR="$SNAP/usr/lib/pulse-16.1+dfsg1"
+-elif [ -d "$SNAP/usr/lib/pulse-16.1" ]; then
+-    PA_MODULES_DIR="$SNAP/usr/lib/pulse-16.1"
+-else
+-    # Fallback: try to find it
+-    PA_MODULES_DIR=$(ls -d $SNAP/usr/lib/pulse-* 2>/dev/null | head -1)
+-fi
+-
+-if [ -z "$PA_MODULES_DIR" ]; then
+-    echo "ERROR: Could not find PulseAudio modules directory"
+-    echo "Searched in: $SNAP/usr/lib/"
+-    echo "Contents:"
+-    ls -la $SNAP/usr/lib/ | grep pulse || echo "No pulse directories found"
+-    exit 1
+-fi
+-
+-echo "Using PulseAudio modules from: $PA_MODULES_DIR"
+-
+-# Set library paths to include the modules directory
+-export LD_LIBRARY_PATH="$PA_MODULES_DIR/modules:$SNAP/usr/lib/pulseaudio:$SNAP/usr/lib/aarch64-linux-gnu/pulseaudio:$SNAP/usr/lib/aarch64-linux-gnu:$LD_LIBRARY_PATH"
+-
+-# Ensure runtime directory exists with proper permissions
+-mkdir -p /var/run/pulse
+-chmod 755 /var/run/pulse
+-
+-# Create state directory if it doesn't exist
+-[ -e "$PULSE_STATE_PATH" ] || mkdir -p "$PULSE_STATE_PATH"
+-
+-# Extra debug arguments if enabled
+-EXTRA_ARGS=()
+-if [ -e "$SNAP_DATA"/config/debug ]; then
+-    EXTRA_ARGS+=(-vvvv)
+-    export LIBASOUND_DEBUG=1
+-fi
+-
+-# Small delay to ensure runtime directory is ready
+-sleep 1
+-
+-# Start PulseAudio without --system flag
+-exec "$SNAP/usr/bin/pulseaudio" \
+-    --exit-idle-time=-1 \
+-    --disallow-exit=yes \
+-    -F "$SNAP/etc/pulse/default.pa" \
+-    -p "$PA_MODULES_DIR/modules" \
+-    -n \
+-    "${EXTRA_ARGS[@]}"
+diff --git a/snap/hooks/connect-plug-alsa b/snap/hooks/connect-plug-alsa
+new file mode 100755
+index 0000000..1c8a0b7
+--- /dev/null
++++ b/snap/hooks/connect-plug-alsa
+@@ -0,0 +1,3 @@
++#!/bin/sh -eux
++
++snapctl start --enable "${SNAP_INSTANCE_NAME}.pulseaudio"
+diff --git a/snap/hooks/install b/snap/hooks/install
+new file mode 100755
+index 0000000..6c0d59a
+--- /dev/null
++++ b/snap/hooks/install
+@@ -0,0 +1,3 @@
++#!/bin/sh
++
++mkdir -p "${SNAP_COMMON}/var/run/pulse"
+diff --git a/snap/snapcraft.yaml b/snap/snapcraft.yaml
+index 8a8ca08..e840399 100644
+--- a/snap/snapcraft.yaml
++++ b/snap/snapcraft.yaml
+@@ -1,6 +1,6 @@
+-name: pulseaudio-minimal
++name: pulseaudio
+ base: core24
+-version: '17.0'
++adopt-info: pulseaudio
+ summary: Minimal PulseAudio sound server for Ubuntu Core
+ description: |
+   A minimal PulseAudio sound server snap for Ubuntu Core 24,
+@@ -11,13 +11,12 @@ grade: stable
+ confinement: strict
+ compression: lzo
+ license: GPL-2.0+
+-website: https://github.com/Cruzh3r2107/pulseaudio-minimal-snap
+-source-code: https://github.com/Cruzh3r2107/pulseaudio-minimal-snap
+-issues: https://github.com/Cruzh3r2107/pulseaudio-minimal-snap/issues
+ 
+ platforms:
++  amd64:
++  # Enable cross-building for arm64
+   arm64:
+-    build-on: [arm64, amd64]
++    build-on: [amd64, arm64]
+     build-for: [arm64]
+ 
+ apps:
+@@ -25,22 +24,19 @@ apps:
+     command: bin/pulseaudio
+     daemon: simple
+     install-mode: disable
+-    plugs:
+-      - alsa
+-      - network
+-      - network-bind
+-      - hardware-observe
+-    slots:
+-      - audio-playback
+-      - audio-record
++    plugs: [alsa, hardware-observe, network, network-bind]
++    slots: [audio-playback, audo-record]
++    environment: &_environment
++      LD_LIBRARY_PATH: "$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio:$LD_LIBRARY_PATH"
++      PULSE_RUNTIME_PATH: $SNAP_COMMON/var/run/pulse
++      PULSE_STATE_PATH: $SNAP_COMMON/state
++      ALSA_CONFIG_PATH: $SNAP/usr/share/alsa/alsa.conf
+ 
+   pactl:
+     command-chain: [bin/client-wrapper]
+     command: usr/bin/pactl
+-    plugs:
+-      - network
+-      - playback
+-      - record
++    plugs: [network, playback, record]
++    environment: *_environment
+ 
+ plugs:
+   playback:
+@@ -54,12 +50,6 @@ slots:
+   audio-record:
+     interface: audio-record
+ 
+-environment:
+-  LD_LIBRARY_PATH: "$SNAP/usr/lib/pulseaudio:$SNAP/usr/lib/aarch64-linux-gnu/pulseaudio:$SNAP/usr/lib/aarch64-linux-gnu:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
+-  PULSE_RUNTIME_PATH: /var/run/pulse
+-  PULSE_STATE_PATH: $SNAP_COMMON/state
+-  ALSA_CONFIG_PATH: $SNAP/usr/share/alsa/alsa.conf
+-
+ layout:
+   /etc/pulse:
+     bind: $SNAP/etc/pulse
+@@ -73,62 +63,30 @@ layout:
+     symlink: $SNAP/usr/share/alsa
+ 
+ parts:
+-  scripts:
+-    plugin: dump
+-    source: bin/
+-    organize:
+-      client-wrapper: bin/client-wrapper
+-      pulseaudio: bin/pulseaudio
+-    override-prime: |
+-      craftctl default
+-      chmod +x $CRAFT_PRIME/bin/pulseaudio
+-      chmod +x $CRAFT_PRIME/bin/client-wrapper
+-
+-  config:
+-    plugin: dump
+-    source: config/
+-    organize:
+-      default.pa: etc/pulse/default.pa
+-      client.conf: etc/pulse/client.conf
+-
+   pulseaudio:
+-    plugin: nil
+-    after: [scripts, config]
++    plugin: dump
++    source: src/
+     stage-packages:
+-      # Core PulseAudio
+-      - pulseaudio
+-      - pulseaudio-utils
+-      - libpulse0
+-      # ALSA support
+-      - libasound2
+-      - libasound2-plugins
+-      # Audio codecs
+-      - libsndfile1
+-      - libflac12
+-      - libogg0
+-      - libvorbis0a
+-      - libvorbisenc2
+-      - libopus0
+-      # Essential dependencies
+-      - libltdl7
+-      - libspeexdsp1
+-      - libasyncns0
+-      - libtdb1
+-      - libsoxr0
+-      - liborc-0.4-0
++      - pulseaudio:$CRAFT_ARCH_BUILD_FOR
+     override-build: |
++      craftctl set version="$(dpkg-deb -f "${CRAFT_PART_BUILD}/../stage_packages/pulseaudio"_*.deb Version)"
++
++      rm -f "${CRAFT_PART_INSTALL}/etc/pulse/client.conf" \
++            "${CRAFT_PART_INSTALL}/etc/pulse/default.pa"
++
+       craftctl default
+-      # Create necessary directories
+-      mkdir -p $CRAFT_PART_INSTALL/var/run/pulse
+-      mkdir -p $CRAFT_PART_INSTALL/usr/share/applications
++
++      pa_dir="$(basename "${CRAFT_PART_INSTALL}/usr/lib/pulse-"*)"
++      sed -i "s/_pa_modules_dir/$pa_dir/" "${CRAFT_PART_INSTALL}/bin/pulseaudio"
+     stage:
+-      # Stage all libraries - simple but larger
++      - bin/
++      - etc/alsa/
++      - etc/pulse/client.conf
++      - etc/pulse/default.pa
+       - usr/bin/pulseaudio
+       - usr/bin/pactl
+       - usr/bin/pacmd
+-      - usr/lib/*
+-      - usr/share/pulseaudio/*
+-      - usr/share/alsa/*
+-      - etc/alsa/*
+-      - var/run/pulse
+-      - usr/share/applications
++      - usr/lib/pulse-*/
++      - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/
++      - usr/share/pulseaudio/
++      - usr/share/alsa/
+diff --git a/src/bin/client-wrapper b/src/bin/client-wrapper
+new file mode 100755
+index 0000000..7ceb42d
+--- /dev/null
++++ b/src/bin/client-wrapper
+@@ -0,0 +1,19 @@
++#!/bin/sh
++#
++# PulseAudio client wrapper for pactl and other utilities
++#
++
++if [ "$(id -u)" -ne 0 ]; then
++   echo "This script must be run as root" 1>&2
++   exit 1
++fi
++
++export PULSE_RUNTIME_PATH="$SNAP_COMMON/pulse"
++export PULSE_CLIENTCONFIG="$SNAP/etc/pulse/client.conf"
++export HOME="$SNAP_COMMON/home"
++mkdir -p "$HOME"
++
++unset PULSE_SYSTEM
++unset XDG_RUNTIME_DIR
++
++exec "$@"
+diff --git a/src/bin/pulseaudio b/src/bin/pulseaudio
+new file mode 100755
+index 0000000..08f1583
+--- /dev/null
++++ b/src/bin/pulseaudio
+@@ -0,0 +1,33 @@
++#!/bin/bash -e
++
++# Populated during snap build
++PA_MODULES_DIR=_pa_modules_dir
++
++# Set library paths to include the modules directory
++export LD_LIBRARY_PATH="$PA_MODULES_DIR/modules:$LD_LIBRARY_PATH"
++
++# Ensure runtime directory exists with proper permissions
++mkdir -p /var/run/pulse
++chmod 755 /var/run/pulse
++
++# Create state directory if it doesn't exist
++[ -e "$PULSE_STATE_PATH" ] || mkdir -p "$PULSE_STATE_PATH"
++
++# Extra debug arguments if enabled
++EXTRA_ARGS=()
++if [ -e "$SNAP_DATA"/config/debug ]; then
++    EXTRA_ARGS+=(-vvvv)
++    export LIBASOUND_DEBUG=1
++fi
++
++# Small delay to ensure runtime directory is ready
++sleep 1
++
++# Start PulseAudio without --system flag
++exec "$SNAP/usr/bin/pulseaudio" \
++    --exit-idle-time=-1 \
++    --disallow-exit=yes \
++    -F "$SNAP/etc/pulse/default.pa" \
++    -p "$PA_MODULES_DIR/modules" \
++    -n \
++    "${EXTRA_ARGS[@]}"
+diff --git a/config/client.conf b/src/etc/pulse/client.conf
+similarity index 100%
+rename from config/client.conf
+rename to src/etc/pulse/client.conf
+diff --git a/config/default.pa b/src/etc/pulse/default.pa
+similarity index 100%
+rename from config/default.pa
+rename to src/etc/pulse/default.pa
+-- 
+2.51.0
+

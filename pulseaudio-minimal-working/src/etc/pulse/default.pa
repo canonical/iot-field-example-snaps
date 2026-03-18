@@ -1,0 +1,35 @@
+#!/usr/bin/pulseaudio -nF
+#
+# PulseAudio system mode configuration for Ubuntu Core 24
+
+### Automatically load driver modules depending on the hardware available
+.ifexists module-udev-detect.so
+load-module module-udev-detect
+.else
+### Use the static hardware detection module (for systems that lack udev support)
+load-module module-detect
+.endif
+
+### Load several protocols
+.ifexists module-native-protocol-unix.so
+load-module module-native-protocol-unix auth-anonymous=1
+.endif
+
+### Automatically restore the volume of streams and devices
+load-module module-stream-restore
+load-module module-device-restore
+
+### Automatically restore the default sink/source
+load-module module-default-device-restore
+
+### Make sure we always have a sink around
+load-module module-always-sink
+
+### Automatically suspend sinks/sources that become idle for too long
+load-module module-suspend-on-idle
+
+### Enable positioned event sounds
+load-module module-position-event-sounds
+
+### Route audio based on intended roles of streams
+load-module module-intended-roles
