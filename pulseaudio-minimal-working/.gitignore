@@ -1,0 +1,26 @@
+# Snapcraft build artifacts
+*.snap
+parts/
+stage/
+prime/
+*.txt
+*.log
+
+# LXD/Multipass
+*.charm
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

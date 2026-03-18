@@ -1,0 +1,92 @@
+name: pulseaudio
+base: core24
+adopt-info: pulseaudio
+summary: Minimal PulseAudio sound server for Ubuntu Core
+description: |
+  A minimal PulseAudio sound server snap for Ubuntu Core 24,
+  built using Ubuntu packages. Provides audio-playback and
+  audio-record interfaces for applications like Firefox.
+
+grade: stable
+confinement: strict
+compression: lzo
+license: GPL-2.0+
+
+platforms:
+  amd64:
+  # Enable cross-building for arm64
+  arm64:
+    build-on: [amd64, arm64]
+    build-for: [arm64]
+
+apps:
+  pulseaudio:
+    command: bin/pulseaudio
+    daemon: simple
+    install-mode: disable
+    plugs: [alsa, hardware-observe, network, network-bind]
+    slots: [audio-playback, audio-record]
+    environment: &_environment
+      LD_LIBRARY_PATH: "$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio:$LD_LIBRARY_PATH"
+      PULSE_RUNTIME_PATH: $SNAP_COMMON/var/run/pulse
+      PULSE_STATE_PATH: $SNAP_COMMON/state
+      ALSA_CONFIG_PATH: $SNAP/usr/share/alsa/alsa.conf
+
+  pactl:
+    command-chain: [bin/client-wrapper]
+    command: usr/bin/pactl
+    plugs: [network, playback, record]
+    environment: *_environment
+
+plugs:
+  playback:
+    interface: audio-playback
+  record:
+    interface: audio-record
+
+slots:
+  audio-playback:
+    interface: audio-playback
+  audio-record:
+    interface: audio-record
+
+layout:
+  /etc/pulse:
+    bind: $SNAP/etc/pulse
+  /etc/alsa:
+    bind: $SNAP/etc/alsa
+  /var/lib/pulse:
+    bind: $SNAP_DATA
+  /usr/share/pulseaudio:
+    symlink: $SNAP/usr/share/pulseaudio
+  /usr/share/alsa:
+    symlink: $SNAP/usr/share/alsa
+
+parts:
+  pulseaudio:
+    plugin: dump
+    source: src/
+    stage-packages:
+      - pulseaudio:$CRAFT_ARCH_BUILD_FOR
+    override-build: |
+      craftctl set version="$(dpkg-deb -f "${CRAFT_PART_BUILD}/../stage_packages/pulseaudio"_*.deb Version | sed 's/^[0-9]*://')"
+
+      rm -f "${CRAFT_PART_INSTALL}/etc/pulse/client.conf" \
+            "${CRAFT_PART_INSTALL}/etc/pulse/default.pa"
+
+      craftctl default
+
+      pa_dir="$(basename "${CRAFT_PART_INSTALL}/usr/lib/pulse-"*)"
+      sed -i "s/_pa_modules_dir/$pa_dir/" "${CRAFT_PART_INSTALL}/bin/pulseaudio"
+    stage:
+      - bin/
+      - etc/alsa/
+      - etc/pulse/client.conf
+      - etc/pulse/default.pa
+      - usr/bin/pulseaudio
+      - usr/bin/pactl
+      - usr/bin/pacmd
+      - usr/lib/pulse-*/
+      - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/
+      - usr/share/pulseaudio/
+      - usr/share/alsa/
