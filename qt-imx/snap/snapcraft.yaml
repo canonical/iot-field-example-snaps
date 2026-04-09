@@ -36,11 +36,11 @@ parts:
     override-pull: |
       # Hardcoded for arm64 cross-compilation
       export WGET_ARCH="aarch64"
-      rm -f ${CRAFT_PART_SRC}/imx-gpu-viv.bin
-      wget https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/imx-gpu-viv-6.4.3.p0.0-${WGET_ARCH}.bin \
-        -O ${CRAFT_PART_SRC}/imx-gpu-viv.bin
-      chmod a+x ${CRAFT_PART_SRC}/imx-gpu-viv.bin
-      ${CRAFT_PART_SRC}/imx-gpu-viv.bin --auto-accept --force
+      rm -f "${CRAFT_PART_SRC}/imx-gpu-viv.bin"
+      wget "https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/imx-gpu-viv-6.4.3.p0.0-${WGET_ARCH}.bin" \
+        -O "${CRAFT_PART_SRC}/imx-gpu-viv.bin"
+      chmod a+x "${CRAFT_PART_SRC}/imx-gpu-viv.bin"
+      "${CRAFT_PART_SRC}/imx-gpu-viv.bin" --auto-accept --force
     organize:
       imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/fb/*: usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/
       imx-gpu-viv-6.4.3.p0.0-aarch64/gpu-core/usr/lib/*.so*: usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/
@@ -105,9 +105,9 @@ parts:
     override-build: |
       craftctl default
       # Move all files from /lib to /usr/lib and create a symlink
-      cp -r ${CRAFT_PART_INSTALL}/lib/* ${CRAFT_PART_INSTALL}/usr/lib/
-      rm -rf ${CRAFT_PART_INSTALL}/lib
-      ln -sr ${CRAFT_PART_INSTALL}/usr/lib ${CRAFT_PART_INSTALL}/lib
+      cp -r "${CRAFT_PART_INSTALL}/lib/"* "${CRAFT_PART_INSTALL}/usr/lib/"
+      rm -rf "${CRAFT_PART_INSTALL}/lib"
+      ln -sr "${CRAFT_PART_INSTALL}/usr/lib" "${CRAFT_PART_INSTALL}/lib"
     stage:
       # Remove all mesa GL libraries
       - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libGLES*
@@ -147,9 +147,9 @@ parts:
       - gcc-aarch64-linux-gnu
     override-pull: |
       craftctl default
-      patch -p1 < ${CRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch
-      patch -p1 < ${CRAFT_PROJECT_DIR}/patches/0002-Do-not-enforce-CROSS_COMPILE.patch
-      patch -p1 < ${CRAFT_PROJECT_DIR}/patches/0003-SocketCAN-Fix-compiler-error-SIOCGSTAMP-was-not-decl.patch
+      patch -p1 < "${CRAFT_PROJECT_DIR}/patches/0001-Added-linux-imx8-g.patch"
+      patch -p1 < "${CRAFT_PROJECT_DIR}/patches/0002-Do-not-enforce-CROSS_COMPILE.patch"
+      patch -p1 < "${CRAFT_PROJECT_DIR}/patches/0003-SocketCAN-Fix-compiler-error-SIOCGSTAMP-was-not-decl.patch"
     override-build: |
       # Unset all snapcraft build variables so they don't interfere
       unset LD
@@ -161,16 +161,16 @@ parts:
       unset PKG_CONFIG_PATH
 
       ./configure -debug -nomake tests -nomake examples -opensource -confirm-license \
-        -prefix /usr -sysroot ${CRAFT_STAGE} \
-        -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -qt-pcre \
+        -prefix /usr -sysroot "${CRAFT_STAGE}" \
+        -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -wayland -qt-pcre \
         -qt-libjpeg -qt-libpng -qt-freetype -qt-zlib \
         -pkg-config -no-mtdev \
         -xkb-config-root /snap/qt-imx/current/usr/share/X11/xkb \
-        -device ${DEVICE} ${DEVICE_OPTIONS} \
+        -device "${DEVICE}" ${DEVICE_OPTIONS} \
         -no-alsa -no-openssl -no-audio-backend -no-use-gold-linker \
-        -extprefix ${CRAFT_PART_INSTALL}/usr \
+        -extprefix "${CRAFT_PART_INSTALL}/usr" \
         -skip qtwebengine \
-        -libdir ${CRAFT_PART_INSTALL}/usr/lib/aarch64-linux-gnu/
+        -libdir "${CRAFT_PART_INSTALL}/usr/lib/aarch64-linux-gnu/"
 
       make -j$(nproc)
 
@@ -185,7 +185,7 @@ parts:
       - qt5
     plugin: nil
     override-build: |
-      cat > ${CRAFT_PART_INSTALL}/qt.conf << EOF
+      cat > "${CRAFT_PART_INSTALL}/qt.conf" << EOF
       [Paths]
       Prefix = ../
       Libraries = ../lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/
@@ -203,9 +203,9 @@ parts:
       - strace
       - gdb
     override-build: |
-      ${CRAFT_STAGE}/usr/bin/qmake
+      "${CRAFT_STAGE}/usr/bin/qmake"
       make -j$(nproc)
-      make INSTALL_ROOT=${CRAFT_PART_INSTALL} install
+      make INSTALL_ROOT="${CRAFT_PART_INSTALL}" install
     stage:
       - -lib
 
