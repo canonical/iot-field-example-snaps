@@ -176,7 +176,7 @@ parts:
 
       ./configure -debug -nomake tests -nomake examples -opensource -confirm-license \
         -prefix /usr -sysroot ${CRAFT_STAGE} \
-        -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -qt-pcre \
+        -opengl es2 -no-pulseaudio -qpa eglfs -no-xcb -wayland -qt-pcre \
         -qt-libjpeg -qt-libpng -qt-freetype -qt-zlib \
         -pkg-config -no-mtdev \
         -xkb-config-root /snap/qt-imx/current/usr/share/X11/xkb \
