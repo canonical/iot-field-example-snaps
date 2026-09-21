@@ -34,6 +34,13 @@ controller-daemon shows how one snap could control those daemons.
 This example should be considered a solution until cross-snap daemon startup
 ordering is supported by snapd.
 
+### gpio-chardev
+
+gpio-chardev shows how an application snap drives GPIO lines through the modern
+`gpio-chardev` interface (libgpiod), the replacement for the legacy sysfs `gpio`
+interface which does not work on UC26+. Includes a consumer snap and a matching
+example `pc` gadget that declares the `gpio-chardev` slot.
+
 ### one-codebase-many-snaps
 
 one-codebase-many-snaps shows how one could have a single repository build

@@ -1,0 +1,14 @@
+
+# --- Appended to the upstream pc gadget.yaml by this example ---
+# Declares the gpio-chardev slot the gpio-chardev-consumer snap connects to.
+#
+#   source-chip: alternative labels of the source GPIO chip (a list so one
+#                gadget can target boards where the same lines live on a
+#                differently-labelled controller). Find yours with `gpiodetect`.
+#   lines:       lines on that chip to expose - comma list and/or inclusive
+#                ranges, e.g. "0", "3,4", "1-2", "0,2,4-8". Max 512 lines.
+slots:
+  example-gpio:
+    interface: gpio-chardev
+    source-chip: [gpiochip0]
+    lines: 0-3

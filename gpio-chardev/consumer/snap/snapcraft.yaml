@@ -1,0 +1,72 @@
+name: gpio-chardev-consumer
+base: core26
+version: '0.1'
+summary: Example consumer of the gpio-chardev interface (libgpiod)
+description: |
+  gpio-chardev-consumer is a proof-of-concept application snap that drives
+  GPIO lines on Ubuntu Core through the modern "gpio-chardev" snap interface,
+  using libgpiod (the gpiod command-line tools).
+
+  gpio-chardev is the replacement for the legacy "gpio" (sysfs) interface,
+  which does not work on UC26+ (the sysfs GPIO ABI is gone). It requires
+  snapd 2.72+ and a gadget that declares a matching gpio-chardev slot.
+
+  When the interface is connected, snapd's snap-gpio-helper exports the
+  gadget-declared lines as a dedicated character device visible to this snap
+  at /dev/snap/gpio-chardev/<slot>/<...>. The tools here operate on that.
+
+  A matching example gadget is in ../example-gadget.
+
+grade: stable
+confinement: strict
+# gpio-chardev support landed in snapd 2.72.
+assumes:
+  - snapd2.72
+
+platforms:
+  amd64:
+  arm64:
+    build-on: [amd64, arm64]
+    build-for: [arm64]
+
+apps:
+  # List the GPIO chips/lines visible to this snap.
+  detect:
+    command: bin/gpio-detect
+    plugs: [example-gpio]
+
+  # Blink a line: gpio-chardev-consumer.blink <offset> [seconds]
+  blink:
+    command: bin/gpio-blink
+    plugs: [example-gpio]
+
+  # Long-running daemon that toggles a line on an interval.
+  toggle:
+    command: bin/gpio-toggle
+    daemon: simple
+    install-mode: disable
+    restart-condition: on-failure
+    plugs: [example-gpio]
+
+plugs:
+  # The plug's name is arbitrary; what matters is interface: gpio-chardev.
+  # It connects to a gadget slot of the same interface. Not auto-connected:
+  #   snap connect gpio-chardev-consumer:example-gpio <gadget>:<slot>
+  example-gpio:
+    interface: gpio-chardev
+
+parts:
+  wrappers:
+    plugin: dump
+    source: src/
+    organize:
+      bin/*: bin/
+
+  libgpiod:
+    plugin: nil
+    stage-packages:
+      - gpiod
+      - libgpiod3
+    stage:
+      - -usr/share/doc
+      - -usr/share/man

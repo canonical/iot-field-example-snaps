@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# Long-running daemon: toggle a GPIO line on an interval. Demonstrates a
+# confined service driving GPIO through gpio-chardev.
+#   snap set gpio-chardev-consumer line=<offset> interval=<seconds>
+#
+LINE="$(snapctl get line 2>/dev/null || true)";     LINE="${LINE:-0}"
+INTERVAL="$(snapctl get interval 2>/dev/null || true)"; INTERVAL="${INTERVAL:-1}"
+
+chip="$(find /dev/snap/gpio-chardev -maxdepth 2 -type c 2>/dev/null | head -1)"
+if [ -z "$chip" ]; then
+    echo "gpio-toggle: no exported gpio-chardev node - connect the interface." >&2
+    exit 1
+fi
+
+echo "gpio-toggle: toggling $chip line $LINE every ${INTERVAL}s"
+# core26 has libgpiod v2 (chip is -c/--chip). Use gpioset's native repeating
+# toggle rather than shelling out to `timeout` (a base binary that AppArmor
+# blocks for a strict snap): "-t <period>,<period>" with no trailing 0 repeats
+# the sequence forever, alternating the line every INTERVAL. gpioset holds the
+# line for the whole time it runs; the daemon runs as root so it can open the
+# root:gpio 0660 aggregator chardev.
+exec gpioset -c "$chip" -t "${INTERVAL}s,${INTERVAL}s" "$LINE"=1
