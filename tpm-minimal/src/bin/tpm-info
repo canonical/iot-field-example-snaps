@@ -1,0 +1,28 @@
+#!/bin/bash -e
+#
+# Print basic TPM information using tpm2-tools over the kernel resource
+# manager. Requires the "tpm" interface to be connected:
+#     snap connect tpm-minimal:tpm
+#
+# TPM2TOOLS_TCTI is set in snapcraft.yaml (device:/dev/tpmrm0).
+
+if [ ! -e /dev/tpmrm0 ] && [ ! -e /dev/tpm0 ]; then
+    echo "No TPM device found (/dev/tpmrm0, /dev/tpm0)." >&2
+    echo "This device may not have a TPM, or the 'tpm' interface is not" >&2
+    echo "connected. Try: snap connect ${SNAP_INSTANCE_NAME:-tpm-minimal}:tpm" >&2
+    exit 1
+fi
+
+echo "== TPM fixed properties =="
+tpm2_getcap properties-fixed || {
+    echo "tpm2_getcap failed - is the 'tpm' interface connected?" >&2
+    exit 1
+}
+
+echo
+echo "== Active PCR banks =="
+tpm2_getcap pcrs
+
+echo
+echo "== PCR values (SHA-256 bank) =="
+tpm2_pcrread sha256

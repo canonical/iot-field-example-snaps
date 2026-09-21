@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+# Example long-running confined service that reads a PCR from the TPM on an
+# interval. Demonstrates a daemon (not just a one-shot command) using the
+# "tpm" interface. Configure the interval with:
+#     snap set tpm-minimal interval=<seconds>
+#
+INTERVAL="$(snapctl get interval 2>/dev/null || true)"
+INTERVAL="${INTERVAL:-30}"
+
+echo "tpm-watch: reading PCR 7 (SHA-256) every ${INTERVAL}s"
+
+while true; do
+    if tpm2_pcrread sha256:7 2>/dev/null; then
+        :
+    else
+        echo "tpm-watch: cannot read TPM - is 'snap connect ${SNAP_INSTANCE_NAME:-tpm-minimal}:tpm' done?" >&2
+    fi
+    sleep "$INTERVAL"
+done

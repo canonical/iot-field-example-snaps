@@ -65,6 +65,13 @@ qt-imx is a PoC snap for how to include proprietary graphics libraries and Qt
 for displaying graphical elements to a display. The example specifically targets
 the i.MX platform from NXP, but can be modified to cover other platforms.
 
+### tpm-minimal
+
+tpm-minimal shows how a strictly-confined snap talks to the system TPM via the
+`tpm` interface (reading PCRs and capabilities with tpm2-tools). Covers
+application-level TPM access, not TPM-backed full-disk encryption (a model-grade
+concern).
+
 ### using-docker
 
 using-docker contains a collection of minimal tooling (written as very trivial
