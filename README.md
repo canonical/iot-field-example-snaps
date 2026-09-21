@@ -47,6 +47,12 @@ one-codebase-many-snaps shows how one could have a single repository build
 multiple different snaps. The project uses a Makefile for demonstration purposes
 but this could be extended to any build system or even scripting.
 
+### pipewire-mixer
+
+pipewire-mixer runs PipeWire + WirePlumber + pipewire-pulse as a confined
+system daemon on core26 so multiple snaps can share and mix audio. Includes two
+toy tone-player client snaps to demonstrate cross-snap mixing.
+
 ### qt-imx
 
 qt-imx is a PoC snap for how to include proprietary graphics libraries and Qt

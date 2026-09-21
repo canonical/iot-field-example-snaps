@@ -1,0 +1,155 @@
+name: pipewire-mixer
+base: core26
+adopt-info: pipewire
+summary: PipeWire system sound server for Ubuntu Core (shared mixing)
+description: |
+  Runs PipeWire + WirePlumber + pipewire-pulse as a strictly-confined *system*
+  daemon on Ubuntu Core so multiple snaps can share and mix audio. Clients can
+  connect either natively (PipeWire) or via the PulseAudio-compatible socket.
+
+  Binaries come from the Ubuntu archive (no source patches). WirePlumber runs
+  with the `main-systemwide` profile (needs wireplumber >= 0.5, i.e. core26).
+
+  Sockets are created under $SNAP_COMMON:
+    * $SNAP_COMMON/pipewire-0            (PipeWire native, 0660)
+    * $SNAP_COMMON/pipewire-0-manager    (PipeWire manager, 0600)
+    * $SNAP_COMMON/pulse/native          (PulseAudio compatibility, 0660)
+  These are the paths snapd's pipewire / audio-playback interfaces whitelist for
+  client snaps in system mode.
+
+  A PulseAudio equivalent of this example is in ../pulseaudio-mixer.
+
+grade: stable
+confinement: strict
+compression: lzo
+assumes:
+  - snapd2.71
+
+platforms:
+  amd64:
+  arm64:
+    build-on: [amd64, arm64]
+    build-for: [arm64]
+
+environment:
+  # SPA plugins and the runtime socket locations.
+  SPA_PLUGIN_DIR: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/spa-0.2
+  PIPEWIRE_RUNTIME_DIR: $SNAP_COMMON
+  PULSE_RUNTIME_PATH: $SNAP_COMMON/pulse
+  PULSE_SERVER: unix:$SNAP_COMMON/pulse/native
+
+layout:
+  /usr/share/pipewire:
+    bind: $SNAP/usr/share/pipewire
+  /usr/share/wireplumber:
+    bind: $SNAP/usr/share/wireplumber
+  /usr/share/alsa:
+    bind: $SNAP/usr/share/alsa
+  /usr/share/alsa-card-profile:
+    bind: $SNAP/usr/share/alsa-card-profile
+  /etc/alsa:
+    bind: $SNAP/etc/alsa
+  /etc/pipewire:
+    bind: $SNAP/etc/pipewire
+  /etc/wireplumber:
+    bind: $SNAP/etc/wireplumber
+  # Module dirs looked up under the arch triplet lib path.
+  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pipewire-0.3:
+    symlink: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pipewire-0.3
+  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/wireplumber-0.5:
+    symlink: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/wireplumber-0.5
+  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/alsa-lib:
+    symlink: $SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/alsa-lib
+
+apps:
+  pipewire:
+    command: usr/bin/pipewire
+    daemon: simple
+    install-mode: disable
+    restart-condition: always
+    before: [wireplumber, pipewire-pulse]
+    sockets:
+      pipewire-0:
+        listen-stream: $SNAP_COMMON/pipewire-0
+        socket-mode: 0660
+      pipewire-0-manager:
+        listen-stream: $SNAP_COMMON/pipewire-0-manager
+        socket-mode: 0600
+    slots: [pipewire, audio-playback, audio-record, pulseaudio]
+    # network-bind is required by snapd for any app that declares sockets:
+    plugs: [alsa, hardware-observe, network-bind]
+
+  wireplumber:
+    command: usr/bin/wireplumber -p main-systemwide
+    daemon: simple
+    install-mode: disable
+    restart-condition: always
+    after: [pipewire]
+    slots: [audio-playback, audio-record]
+    plugs: [alsa, hardware-observe]
+
+  pipewire-pulse:
+    command: usr/bin/pipewire-pulse
+    daemon: simple
+    install-mode: disable
+    restart-condition: always
+    after: [pipewire]
+    sockets:
+      pulse-native:
+        listen-stream: $SNAP_COMMON/pulse/native
+        socket-mode: 0660
+    slots: [audio-playback, audio-record, pulseaudio]
+    # network-bind is required by snapd for any app that declares sockets:
+    plugs: [network-bind]
+
+  # Non-daemon control/introspection tools. These run inside this same snap and
+  # reach the local daemon via PIPEWIRE_RUNTIME_DIR ($SNAP_COMMON), so they do
+  # NOT need the pipewire plug (a snap cannot have a plug and slot of the same
+  # name, and this snap already provides the pipewire slot).
+  pw-cli:
+    command: usr/bin/pw-cli
+  pw-dump:
+    command: usr/bin/pw-dump
+  pw-top:
+    command: usr/bin/pw-top
+  wpctl:
+    command: usr/bin/wpctl
+
+slots:
+  # Provided to OTHER snaps (external clients connect to these).
+  pipewire:
+    interface: pipewire
+  audio-playback:
+    interface: audio-playback
+  audio-record:
+    interface: audio-record
+  pulseaudio:
+    interface: pulseaudio
+
+parts:
+  pipewire:
+    plugin: nil
+    stage-packages:
+      - pipewire
+      - pipewire-pulse
+      - pipewire-alsa
+      - wireplumber
+      - alsa-ucm-conf
+      - alsa-topology-conf
+    override-build: |
+      craftctl set version="$(dpkg-deb -f "${CRAFT_PART_BUILD}/../stage_packages/pipewire"_*.deb Version | sed 's/^[0-9]*://; s/[+-].*//')"
+      craftctl default
+    stage:
+      # Drop things that don't belong in a confined system service.
+      - -usr/lib/systemd
+      - -usr/share/doc
+      - -usr/share/man
+      - -usr/lib/session-migration
+      - -etc/pulse/client.conf.d/01-enable-autospawn.conf
+
+  config:
+    # Our system-mode config drop-ins (see snap/local/etc/...).
+    plugin: dump
+    source: snap/local
+    organize:
+      etc/*: etc/

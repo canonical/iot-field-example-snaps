@@ -1,0 +1,48 @@
+name: pw-client-tone-b
+base: core26
+version: '0.1'
+summary: Toy audio client B - plays a 660 Hz tone via the PipeWire mixer
+description: |
+  A minimal client snap that plays a continuous 660 Hz (E5) sine tone to the
+  pipewire-mixer server over the audio-playback interface (PulseAudio-compatible
+  socket). Run with pw-client-tone-a to hear two independent snaps mixed by
+  PipeWire into one output.
+
+grade: stable
+confinement: strict
+
+platforms:
+  amd64:
+  arm64:
+    build-on: [amd64, arm64]
+    build-for: [arm64]
+
+apps:
+  play:
+    command: bin/play-tone
+    daemon: simple
+    install-mode: disable
+    restart-condition: on-failure
+    plugs: [audio-playback]
+    environment:
+      TONE_HZ: "660"
+
+plugs:
+  audio-playback:
+    interface: audio-playback
+
+parts:
+  wrappers:
+    plugin: dump
+    source: src/
+    organize:
+      bin/*: bin/
+
+  tools:
+    plugin: nil
+    stage-packages:
+      - pulseaudio-utils
+      - sox
+    stage:
+      - -usr/share/doc
+      - -usr/share/man
