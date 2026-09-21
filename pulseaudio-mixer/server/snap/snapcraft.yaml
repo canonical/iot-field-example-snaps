@@ -1,0 +1,104 @@
+name: pulseaudio-mixer
+base: core26
+adopt-info: pulseaudio
+summary: PulseAudio sound server for Ubuntu Core (shared mixing)
+description: |
+  A PulseAudio sound server snap for Ubuntu Core 26 that acts as a shared
+  audio mixer: multiple client snaps connect over the audio-playback /
+  audio-record interfaces and PulseAudio mixes their streams to one output.
+
+  This is the server half of the pulseaudio-mixer example. See the
+  client-tone-a / client-tone-b snaps for minimal clients that play test
+  tones simultaneously to demonstrate mixing.
+
+  Adapted from the pulseaudio-minimal-working reference, moved to core26.
+
+grade: stable
+confinement: strict
+compression: lzo
+license: GPL-2.0+
+
+platforms:
+  amd64:
+  arm64:
+    build-on: [amd64, arm64]
+    build-for: [arm64]
+
+apps:
+  pulseaudio:
+    command: bin/pulseaudio
+    daemon: simple
+    install-mode: disable
+    plugs: [alsa, hardware-observe, network, network-bind]
+    slots: [audio-playback, audio-record]
+    environment: &_environment
+      LD_LIBRARY_PATH: "$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio:$LD_LIBRARY_PATH"
+      # Socket at $SNAP_COMMON/pulse/native - the path the audio-playback
+      # interface allows OTHER client snaps to reach (system mode). Required
+      # for cross-snap mixing.
+      PULSE_RUNTIME_PATH: $SNAP_COMMON/pulse
+      PULSE_STATE_PATH: $SNAP_COMMON/state
+      ALSA_CONFIG_PATH: $SNAP/usr/share/alsa/alsa.conf
+
+  # Bundled control tool for inspecting the running server (list sinks/streams
+  # to see clients being mixed): pulseaudio-mixer.pactl list sink-inputs
+  pactl:
+    command-chain: [bin/client-wrapper]
+    command: usr/bin/pactl
+    plugs: [network, playback, record]
+    environment: *_environment
+
+plugs:
+  playback:
+    interface: audio-playback
+  record:
+    interface: audio-record
+
+slots:
+  audio-playback:
+    interface: audio-playback
+  audio-record:
+    interface: audio-record
+
+layout:
+  /etc/pulse:
+    bind: $SNAP/etc/pulse
+  /etc/alsa:
+    bind: $SNAP/etc/alsa
+  /var/lib/pulse:
+    bind: $SNAP_DATA
+  /usr/share/pulseaudio:
+    symlink: $SNAP/usr/share/pulseaudio
+  /usr/share/alsa:
+    symlink: $SNAP/usr/share/alsa
+
+parts:
+  pulseaudio:
+    plugin: dump
+    source: src/
+    stage-packages:
+      # Bare name resolves to the build-for arch; do NOT use pulseaudio:<arch>
+      # (that needs multiarch apt and breaks cross-building to arm64).
+      - pulseaudio
+    override-build: |
+      craftctl set version="$(dpkg-deb -f "${CRAFT_PART_BUILD}/../stage_packages/pulseaudio"_*.deb Version | sed 's/^[0-9]*://')"
+
+      rm -f "${CRAFT_PART_INSTALL}/etc/pulse/client.conf" \
+            "${CRAFT_PART_INSTALL}/etc/pulse/default.pa"
+
+      craftctl default
+
+      pa_dir="$(basename "${CRAFT_PART_INSTALL}/usr/lib/pulse-"*)"
+      sed -i "s/_pa_modules_dir/$pa_dir/" "${CRAFT_PART_INSTALL}/bin/pulseaudio"
+    stage:
+      - bin/
+      - etc/alsa/
+      - etc/pulse/client.conf
+      - etc/pulse/default.pa
+      - usr/bin/pulseaudio
+      - usr/bin/pactl
+      - usr/bin/pacmd
+      - usr/lib/pulse-*/
+      - usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/
+      - usr/share/pulseaudio/
+      - usr/share/alsa/

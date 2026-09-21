@@ -53,6 +53,12 @@ pipewire-mixer runs PipeWire + WirePlumber + pipewire-pulse as a confined
 system daemon on core26 so multiple snaps can share and mix audio. Includes two
 toy tone-player client snaps to demonstrate cross-snap mixing.
 
+### pulseaudio-mixer
+
+pulseaudio-mixer runs PulseAudio as a shared sound server so multiple snaps play
+audio at once, mixed to one output over the audio-playback interface. Includes
+two toy tone-player client snaps to demonstrate cross-snap mixing.
+
 ### qt-imx
 
 qt-imx is a PoC snap for how to include proprietary graphics libraries and Qt

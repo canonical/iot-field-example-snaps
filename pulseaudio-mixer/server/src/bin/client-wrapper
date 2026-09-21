@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# PulseAudio client wrapper for pactl and other utilities
+#
+
+if [ "$(id -u)" -ne 0 ]; then
+   echo "This script must be run as root" 1>&2
+   exit 1
+fi
+
+export PULSE_RUNTIME_PATH="$SNAP_COMMON/pulse"
+export PULSE_CLIENTCONFIG="$SNAP/etc/pulse/client.conf"
+export HOME="$SNAP_COMMON/home"
+mkdir -p "$HOME"
+
+unset PULSE_SYSTEM
+unset XDG_RUNTIME_DIR
+
+exec "$@"

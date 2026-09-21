@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Socket dir the audio-playback/audio-record interface whitelists for clients.
+mkdir -p "${SNAP_COMMON}/pulse"
