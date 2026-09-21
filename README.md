@@ -34,17 +34,43 @@ controller-daemon shows how one snap could control those daemons.
 This example should be considered a solution until cross-snap daemon startup
 ordering is supported by snapd.
 
+### gpio-chardev
+
+gpio-chardev shows how an application snap drives GPIO lines through the modern
+`gpio-chardev` interface (libgpiod), the replacement for the legacy sysfs `gpio`
+interface which does not work on UC26+. Includes a consumer snap and a matching
+example `pc` gadget that declares the `gpio-chardev` slot.
+
 ### one-codebase-many-snaps
 
 one-codebase-many-snaps shows how one could have a single repository build
 multiple different snaps. The project uses a Makefile for demonstration purposes
 but this could be extended to any build system or even scripting.
 
+### pipewire-mixer
+
+pipewire-mixer runs PipeWire + WirePlumber + pipewire-pulse as a confined
+system daemon on core26 so multiple snaps can share and mix audio. Includes two
+toy tone-player client snaps to demonstrate cross-snap mixing.
+
+### pulseaudio-mixer
+
+pulseaudio-mixer runs PulseAudio as a shared sound server so multiple snaps play
+audio at once, mixed to one output over the audio-playback interface. Includes
+two toy tone-player client snaps to demonstrate cross-snap mixing.
+
 ### qt-imx
 
 qt-imx is a PoC snap for how to include proprietary graphics libraries and Qt
 for displaying graphical elements to a display. The example specifically targets
 the i.MX platform from NXP, but can be modified to cover other platforms.
+
+### tpm-minimal
+
+tpm-minimal shows how a strictly-confined snap talks to the system TPM via the
+`tpm` interface (reading PCRs and capabilities with tpm2-tools). Covers
+application-level TPM access, not TPM-backed full-disk encryption (a model-grade
+concern).
 
 ### using-docker
 

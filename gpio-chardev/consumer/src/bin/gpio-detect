@@ -1,0 +1,42 @@
+#!/bin/bash -e
+#
+# List the GPIO chips/lines this snap can see. When the gpio-chardev interface
+# is connected, snapd exports the gadget-declared lines as a dedicated chardev
+# under /dev/snap/gpio-chardev/<slot>/. libgpiod's gpiodetect/gpioinfo operate
+# on those device nodes.
+
+echo "== Exported gpio-chardev nodes for this snap =="
+if [ -d /dev/snap/gpio-chardev ]; then
+    find /dev/snap/gpio-chardev -maxdepth 2 -print
+else
+    echo "(none - is the interface connected? see README)" >&2
+fi
+
+echo
+echo "== gpioinfo (exported node only) =="
+# Under confinement this snap may ONLY touch the chardev(s) snapd exported for
+# the connected slot - the raw /dev/gpiochipN are intentionally denied, so a
+# bare `gpiodetect` (which scans all of them) would print permission-denied for
+# every chip. Query just our exported node(s) instead. libgpiod v2's gpioinfo
+# takes the chip via -c/--chip.
+found="" denied=""
+for chip in $(find /dev/snap/gpio-chardev -maxdepth 2 -type c 2>/dev/null); do
+    found=1
+    echo "-- $chip --"
+    if ! gpioinfo -c "$chip" 2>/tmp/gpioinfo.err; then
+        cat /tmp/gpioinfo.err >&2
+        grep -qi 'permission denied' /tmp/gpioinfo.err && denied=1
+        echo "  (could not read $chip)" >&2
+    fi
+done
+if [ -z "$found" ]; then
+    echo "No exported gpio-chardev node - connect the interface:" >&2
+    echo "  snap connect ${SNAP_INSTANCE_NAME:-gpio-chardev-consumer}:example-gpio <gadget>:<slot>" >&2
+    exit 1
+fi
+if [ -n "$denied" ]; then
+    echo >&2
+    echo "Permission denied opening the exported chip. The aggregator chardev is" >&2
+    echo "root:gpio 0660, so run this app as root:" >&2
+    echo "  sudo ${SNAP_INSTANCE_NAME:-gpio-chardev-consumer}.detect" >&2
+fi

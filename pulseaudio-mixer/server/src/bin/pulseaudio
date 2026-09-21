@@ -1,0 +1,29 @@
+#!/bin/bash -e
+
+# Populated during snap build
+PA_MODULES_DIR=_pa_modules_dir
+
+# Set library paths to include the modules directory
+export LD_LIBRARY_PATH="$SNAP/usr/lib/$PA_MODULES_DIR/modules:$LD_LIBRARY_PATH"
+
+# Create state directory if it doesn't exist
+[ -e "$PULSE_STATE_PATH" ] || mkdir -p "$PULSE_STATE_PATH"
+
+# Extra debug arguments if enabled
+EXTRA_ARGS=()
+if [ -e "$SNAP_DATA"/config/debug ]; then
+    EXTRA_ARGS+=(-vvvv)
+    export LIBASOUND_DEBUG=1
+fi
+
+# Small delay to ensure runtime directory is ready
+sleep 1
+
+# Start PulseAudio without --system flag
+exec "$SNAP/usr/bin/pulseaudio" \
+    --exit-idle-time=-1 \
+    --disallow-exit=yes \
+    -F "$SNAP/etc/pulse/default.pa" \
+    -p "$SNAP/usr/lib/$PA_MODULES_DIR/modules" \
+    -n \
+    "${EXTRA_ARGS[@]}"

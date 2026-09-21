@@ -1,0 +1,23 @@
+#!/bin/sh -e
+#
+# configure hook — required for `snap set tpm-minimal interval=<seconds>` to work.
+# A snap must ship a configure hook for snapd to accept ANY configuration; with
+# no hook, `snap set` fails with "snap has no configure hook". The tpm-watch
+# daemon reads this value via `snapctl get interval`.
+#
+# We validate the value here so a bad interval is rejected at set-time rather
+# than silently breaking the daemon.
+
+interval="$(snapctl get interval)"
+if [ -n "$interval" ]; then
+    case "$interval" in
+        ''|*[!0-9]*)
+            echo "interval must be a positive integer number of seconds" >&2
+            exit 1
+            ;;
+    esac
+    if [ "$interval" -lt 1 ]; then
+        echo "interval must be >= 1 second" >&2
+        exit 1
+    fi
+fi

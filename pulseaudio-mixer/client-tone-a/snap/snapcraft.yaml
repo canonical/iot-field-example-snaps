@@ -1,0 +1,54 @@
+name: client-tone-a
+base: core26
+version: '0.1'
+summary: Toy audio client A - plays a 440 Hz tone via the shared mixer
+description: |
+  A minimal client snap that plays a continuous 440 Hz (A4) sine tone to a
+  shared PulseAudio server over the audio-playback interface. Run this together
+  with client-tone-b to hear two independent snaps mixed into one output by the
+  pulseaudio-mixer (or pipewire-mixer) server.
+
+  It reaches the server at the interface-whitelisted socket
+  /var/snap/<server>/common/pulse/native via PULSE_SERVER.
+
+grade: stable
+confinement: strict
+
+platforms:
+  amd64:
+  arm64:
+    build-on: [amd64, arm64]
+    build-for: [arm64]
+
+apps:
+  play:
+    command: bin/play-tone
+    daemon: simple
+    install-mode: disable
+    restart-condition: on-failure
+    plugs: [audio-playback]
+    environment:
+      # The server snap that provides the audio-playback slot. Override with:
+      #   snap set client-tone-a server=<server-snap-name>
+      # Default matches the pulseaudio-mixer example.
+      TONE_HZ: "440"
+
+plugs:
+  audio-playback:
+    interface: audio-playback
+
+parts:
+  wrappers:
+    plugin: dump
+    source: src/
+    organize:
+      bin/*: bin/
+
+  tools:
+    plugin: nil
+    stage-packages:
+      - pulseaudio-utils   # provides pacat / paplay
+      - sox                # provides `sox`/`play` to synthesize the tone
+    stage:
+      - -usr/share/doc
+      - -usr/share/man

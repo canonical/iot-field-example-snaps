@@ -1,0 +1,66 @@
+name: tpm-minimal
+base: core26
+version: '0.1'
+summary: Example of using the TPM from a strictly-confined snap
+description: |
+  tpm-minimal is a proof-of-concept snap showing how an application snap can
+  talk to the system Trusted Platform Module (TPM) on Ubuntu Core using the
+  "tpm" snap interface.
+
+  It bundles the standard tpm2-tools and exposes two things:
+    * tpm-info  - a command that prints TPM capabilities and reads PCRs
+    * tpm-watch - a daemon that periodically logs a PCR bank, to show a
+                  long-running confined service using the TPM.
+
+  The "tpm" interface is not auto-connected, so after install you must run
+  `snap connect tpm-minimal:tpm` before the commands can reach the device.
+
+grade: stable
+confinement: strict
+
+platforms:
+  amd64:
+  arm64:
+    build-on: [amd64, arm64]
+    build-for: [arm64]
+
+apps:
+  # One-shot informational command: `snap run tpm-minimal.tpm-info`
+  tpm-info:
+    command: bin/tpm-info
+    plugs: [tpm]
+    environment: &_env
+      # tpm2-tools uses the TCTI to find the device; the kernel resource
+      # manager (/dev/tpmrm0) is the safe multi-client entrypoint.
+      TPM2TOOLS_TCTI: "device:/dev/tpmrm0"
+
+  # Long-running example daemon that reads a PCR every interval.
+  tpm-watch:
+    command: bin/tpm-watch
+    daemon: simple
+    install-mode: disable
+    restart-condition: on-failure
+    plugs: [tpm]
+    environment: *_env
+
+plugs:
+  # Access to /dev/tpm[0-9]* and /dev/tpmrm[0-9]* (kernel resource manager).
+  # deny-auto-connection is set in snapd's base declaration, so connect with:
+  #   snap connect tpm-minimal:tpm
+  tpm:
+    interface: tpm
+
+parts:
+  wrappers:
+    plugin: dump
+    source: src/
+    organize:
+      bin/*: bin/
+
+  tpm2-tools:
+    plugin: nil
+    stage-packages:
+      - tpm2-tools
+    stage:
+      - -usr/share/doc
+      - -usr/share/man

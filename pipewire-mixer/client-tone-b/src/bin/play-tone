@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+# Toy client: continuously play a sine tone to the pipewire-mixer server over
+# the audio-playback interface (PulseAudio-compatible socket). Demonstrates
+# cross-snap mixing when run alongside another tone client.
+#
+# The server exposes a PulseAudio-compatible socket at
+# /var/snap/<server>/common/pulse/native - the path the audio-playback
+# interface whitelists for client snaps in system mode.
+
+SERVER_SNAP="$(snapctl get server 2>/dev/null || true)"
+SERVER_SNAP="${SERVER_SNAP:-pipewire-mixer}"
+HZ="${TONE_HZ:-440}"
+SOCK="/var/snap/${SERVER_SNAP}/common/pulse/native"
+
+export PULSE_SERVER="unix:${SOCK}"
+export HOME="$SNAP_COMMON"
+export XDG_RUNTIME_DIR="$SNAP_COMMON"
+
+# paplay links against libpulsecommon-<ver>.so, which Debian ships in a PRIVATE
+# subdir (usr/lib/<triplet>/pulseaudio/) that is NOT on the default loader path.
+# Without this, paplay dies with:
+#   error while loading shared libraries: libpulsecommon-17.0.so: cannot open ...
+# Add the arch-triplet lib dir and its pulseaudio/ subdir (glob = arch-agnostic).
+for _libdir in "$SNAP"/usr/lib/*-linux-gnu; do
+    [ -d "$_libdir" ] || continue
+    export LD_LIBRARY_PATH="${_libdir}/pulseaudio:${_libdir}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+done
+
+echo "pw-client-tone: playing ${HZ} Hz to ${PULSE_SERVER}"
+
+tone="$SNAP_COMMON/tone-${HZ}.wav"
+if [ ! -f "$tone" ]; then
+    sox -n -r 44100 -c 1 -b 16 "$tone" synth 10 sine "${HZ}" vol 0.3
+fi
+
+for _ in $(seq 1 30); do
+    [ -S "$SOCK" ] && break
+    echo "waiting for server socket at $SOCK ..." >&2
+    sleep 2
+done
+
+while true; do
+    paplay --stream-name="tone-${HZ}Hz" "$tone" \
+        || { echo "paplay failed - is ${SERVER_SNAP} running and connected?" >&2; sleep 3; }
+done

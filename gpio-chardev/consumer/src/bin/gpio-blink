@@ -1,0 +1,58 @@
+#!/bin/bash -e
+#
+# Blink a single GPIO line a few times using libgpiod v2 (core26).
+#   gpio-chardev-consumer.blink <line-offset> [count] [on_seconds]
+#
+# The chip is the chardev snapd exported for our connected slot. We take the
+# first chip under /dev/snap/gpio-chardev/<slot>/; adjust for your gadget.
+#
+# libgpiod v2 notes (core26 ships v2, libgpiod.so.3):
+#   * the chip is passed with -c/--chip (not as a positional argument)
+#   * `gpioset` holds the line until it exits; there is no --mode=time/--sec.
+#   * instead of shelling out to `timeout` (a base binary AppArmor blocks for a
+#     strict snap), use gpioset's OWN timed toggling: -t <period>[,period]...
+#     Periods are ms unless suffixed (s/ms/us/m). A trailing 0 makes gpioset
+#     exit after the sequence; without it the sequence repeats forever.
+#
+# Run as root (the exported aggregator chardev is root:gpio 0660):
+#   sudo gpio-chardev-consumer.blink 0 5 1
+
+OFFSET="${1:-0}"
+COUNT="${2:-5}"
+ON="${3:-1}"
+
+chip="$(find /dev/snap/gpio-chardev -maxdepth 2 -type c 2>/dev/null | head -1)"
+if [ -z "$chip" ]; then
+    echo "No exported gpio-chardev node found. Connect the interface first:" >&2
+    echo "  snap connect ${SNAP_INSTANCE_NAME:-gpio-chardev-consumer}:example-gpio <gadget>:<slot>" >&2
+    exit 1
+fi
+
+# Build a toggle sequence: hold ON, toggle, hold ON, ... then a final 0 so
+# gpioset exits. Starting value is 1, so the line alternates 1->0->1->0...
+# We use COUNT*2 hold periods (COUNT on-phases + COUNT off-phases).
+#
+# IMPORTANT: this aggregator RETAINS the last-driven value after gpioset
+# releases the line (it does not spring back to the default), and the exact
+# line state at the end of a -t sequence depends on the toggle parity. Rather
+# than depend on that, we drive the visible blink and then EXPLICITLY force the
+# line low as a separate step, so the LED always ends OFF.
+seq_periods="${ON}s"
+for _ in $(seq 2 $((COUNT * 2))); do
+    seq_periods="${seq_periods},${ON}s"
+done
+seq_periods="${seq_periods},0"     # final 0 => gpioset exits after the sequence
+
+echo "Blinking $chip line $OFFSET, $COUNT times (${ON}s on/off)"
+if ! gpioset -c "$chip" -t "$seq_periods" "$OFFSET"=1; then
+    rc=$?
+    echo "gpioset failed (rc=$rc)." >&2
+    echo "If it was 'Permission denied' opening the chip, run with sudo:" >&2
+    echo "  sudo ${SNAP_INSTANCE_NAME:-gpio-chardev-consumer}.blink $OFFSET $COUNT $ON" >&2
+    exit "$rc"
+fi
+
+# Leave the line deterministically LOW. `-t0` sets the value and exits
+# immediately; the retained value is then low, so the LED is off.
+gpioset -c "$chip" -t0 "$OFFSET"=0 || true
+echo "done (line $OFFSET left low)"
